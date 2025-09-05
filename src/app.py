@@ -1,19 +1,17 @@
 import streamlit as st
 import time
 from typing import Optional, Dict, Any
-from llm.summarise import TextSummarizer
+from llm.summarize.summarizer import RAGSummarizer, ZeroShotSummarizer, MapReduceSummarizer
 import traceback
-
-
-@st.cache_resource
-def get_summarizer():
-    """Initialize and cache the text summarizer."""
-    return TextSummarizer()
-
+import PyPDF2
 
 class SummarizationApp:
     def __init__(self):
-        self.summarizer = get_summarizer()
+        self.summarizers = {
+            "Default": ZeroShotSummarizer(),
+            "RAG": RAGSummarizer(),
+            "MapReduce": MapReduceSummarizer(),
+        }
         self.setup_page_config()
         self.initialize_session_state()
 
@@ -55,6 +53,9 @@ class SummarizationApp:
             "original_word_count": 0,
             "summary_word_count": 0,
             "compression_ratio": 0,
+            "file_uploaded": False, 
+            "provider": "perplexity", #TODO: change to openais
+            #TODO: Add temperature and OpenAI paramters
         }
         for key, value in defaults.items():
             if key not in st.session_state:
@@ -90,12 +91,9 @@ class SummarizationApp:
     def process_text(self, method: str, text: str) -> Optional[str]:
         try:
             start = time.time()
-            if method == "Baseline Summarize":
-                result = self.summarizer.summarize(text)
-            elif method == "RAG Summarize":
-                result = self.summarizer.summarize(text, type="RAG")
-            elif method == "MapReduce Summarize":
-                result = "🚧 MapReduce summarization coming soon..."
+            if method in self.summarizers:
+                self.summarizers[method].set_provider(st.session_state["provider"])
+                result = self.summarizers[method].summarize(text)
             else:
                 st.error(f"Unknown method: {method}")
                 return None
@@ -141,12 +139,27 @@ class SummarizationApp:
             st.slider("Creativity Level", 0.1, 1.0, 0.7, 0.1)
             st.slider("Complexity Level", 1, 5, 3)
             st.markdown("---")
+            st.session_state["provider"] = st.selectbox(
+                "Select API Provider:",
+                ["perplexity", "openai"],
+            )
+            st.markdown("---")
             st.markdown("### 📁 Upload File")
-            file = st.file_uploader("Upload a text file", type=["txt", "md", "rtf"])
+            file = st.file_uploader("Upload a text file", type=["txt", "md", "rtf", "pdf"])
             if file:
-                content = str(file.read(), "utf-8")
+                content = ""
+                if file.type == "application/pdf":
+                    pdf_reader = PyPDF2.PdfReader(file)
+                    for page in pdf_reader.pages:
+                        content += page.extract_text() or ""
+                else:
+                    content = str(file.read(), "utf-8")
+
                 st.success(f"File loaded: {len(content.split())} words")
                 st.session_state["summarize_input"] = content
+                st.session_state["file_uploaded"] = True
+            else:
+                st.session_state["file_uploaded"] = False
 
     # ---------------------------
     # Main Interface
@@ -170,13 +183,14 @@ class SummarizationApp:
             )
             method = st.selectbox(
                 "Select Summarization Method:",
-                ["Baseline Summarize", "RAG Summarize", "MapReduce Summarize"],
+                ["Default", "RAG", "MapReduce"],
             )
             summarize_input = st.text_area(
                 "Enter or paste content:",
                 value=st.session_state["summarize_input"],
                 key="summarize_input",
                 height=300,
+                disabled=st.session_state.get("file_uploaded", False),
             )
 
             if summarize_input:
@@ -194,7 +208,7 @@ class SummarizationApp:
                             if result:
                                 st.session_state["current_result"] = result
                                 st.session_state["result_ls"] = (
-                                    self.summarizer.split_by_paragraph(result)
+                                    self.summarizers.get("Default").split_by_paragraph(result)
                                 )
             with col_btn2:
                 if st.button("🗑️ Clear All", use_container_width=True):
