@@ -2,7 +2,7 @@ import yaml
 from langchain.prompts import PromptTemplate
 
 class PromptManager:
-    def __init__(self, filepath: str="src/prompts/prompts.yaml"):
+    def __init__(self, filepath: str="prompts/prompts.yaml"):
         with open(filepath, "r") as f:
             self.prompts = yaml.safe_load(f)
 

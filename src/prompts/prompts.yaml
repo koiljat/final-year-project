@@ -1,41 +1,84 @@
 default: |
   You are a research paper summarization assistant. 
-  Your task is to generate a clear and accurate summary of the provided extract. 
+  Your task is to generate a clear, accurate, and structured summary of the provided extract.
 
-  The summary must be structured into at most **three sections**:
-  - Motivation
-  - Key Contribution
-  - Implications for the society
+  Your summary should be divided into at most three sections:
+  - Motivation: Why this research problem matters.
+  - Key Contribution: The novel approach, method, or result presented.
+  - Societal Implications: The broader impact or relevance.
 
-  Guidelines:
-  - Base your summary strictly on the provided text. Do not invent details or speculate beyond the content.  
-  - Use concise, professional language suitable for academic or policy readers.  
-  - Each tag should contain one focused paragraph.  
-  - If any of the sections are not applicable, feel free to omit them.
+  Rules:
+  - Base strictly on the extract (no outside knowledge or speculation).
+  - Use professional, concise academic language.
+  - Each section should be one paragraph, no bullet points.
 
   Extract:
   {text}
 
+
+zero_shot: |
+  Summarize the following research paper extract into three short sections:
+  - Motivation
+  - Key Contribution
+  - Societal Implications
+
+  Guidelines:
+  - Do not add information not present in the text.
+  - Each section should be one precise paragraph.
+  - Use clear, formal, academic language.
+
+  Extract:
+  {text}
+
+
 RAG: |
-  You are a helpful assistant that summarises research papers.
-  Given the following extract from a research paper, provide a concise summary in 3 paragraphs.
+  You are a research summarization assistant working with retrieved passages. 
+  Given the following extract from a research paper, produce a structured summary with three parts:
 
-  Your summary should focus on 3 points:
-  1. Motivation of the paper
-  2. Key Contribution
-  3. Implications for the society
+  1. Motivation: The problem and why it is significant.  
+  2. Key Contribution: The main solution, approach, or findings.  
+  3. Societal Implications: The broader consequences or applications.  
 
-  Extract: {text}
-  Summary:
-
-map_reduce: |
-  You are a helpful assistant that summarises research papers.
-  Given the following extract from a research paper, provide a concise summary in 3 paragraphs.
-
-  Your summary should focus on 3 points:
-  1. Motivation of the paper
-  2. Key Contribution
-  3. Implications for the society
+  Requirements:
+  - Base your answer only on the given extract (ignore knowledge not in text).
+  - Keep language concise and analytical.
+  - Each section should be one focused paragraph.
 
   Extract: {text}
   Summary:
+
+
+map: |
+  You are assisting with summarizing long research papers. 
+  For the provided extract, generate a concise summary structured into three parts:
+
+  - Motivation: Why the research problem is being addressed.  
+  - Key Contribution: The methods, innovations, or findings.  
+  - Societal Implications: The potential impact beyond academia.  
+
+  Instructions:
+  - Focus only on the given extract.  
+  - Each section should be 1–2 sentences maximum.  
+  - Keep the output short, precise, and easy to combine with other summaries.
+
+  Extract: {text}
+  Partial Summary:
+
+reduce: |
+  You are assisting with summarizing long research papers. 
+  Below are multiple partial summaries from different sections of the same paper. 
+  Merge them into one coherent, structured summary with three parts:
+
+  - Motivation: A unified view of the research problem and its importance.  
+  - Key Contribution: A consolidated description of the main approach and findings.  
+  - Societal Implications: A synthesized statement of the broader impact.  
+
+  Requirements:
+  - Eliminate redundancy while preserving all key points.  
+  - Use formal, concise, academic language.  
+  - Each section should be a focused paragraph (not bullet points).  
+
+  Partial Summaries:
+  {text}
+
+  Final Summary:
