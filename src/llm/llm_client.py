@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class LLMClient:
-    def __init__(self, provider="perplexity", model=None, temperature=0):
+    def __init__(self, provider="gemini", model=None, temperature=0):
         """
         Initializes the LLM client with the specified provider, model, and temperature.
         Loads environment variables using `load_dotenv()`. Sets up the language model interface
@@ -37,11 +37,14 @@ class LLMClient:
         elif self.provider == "perplexity":
             logger.info("Using Perplexity provider")
             self.llm = ChatPerplexity(model=model or "sonar", temperature=temperature)
+        elif self.provider == "gemini":
+            logger.info("Using Gemini provider")
+            self.llm = ChatGoogleGenerativeAI(model=model or "gemini-2.5-flash", temperature=temperature)
         else:
             logger.error(f"Unknown provider: {provider}")
             raise ValueError(f"Unknown provider: {provider}")
 
-    def run(self, prompt: str):
+    def run(self, prompt: str) -> str:
         """
         Executes the LLM (Large Language Model) with the provided prompt and returns the response content as a string.
 
@@ -68,5 +71,5 @@ class LLMClient:
         self.provider = provider.lower()
 
 if __name__ == "__main__":
-    client = LLMClient(provider="perplexity")
-    print("Perplexity:", client.run("Hello from Perplexity!"))
+    client = LLMClient(provider="gemini")
+    print("Gemini:", client.run("Hello from Gemini!"))

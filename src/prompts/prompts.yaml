@@ -82,3 +82,43 @@ reduce: |
   {text}
 
   Final Summary:
+
+shorten: |
+  You are assisting with summarizing long research papers. 
+  Below is a detailed section of summary of a research paper. 
+  Condense it into a shorter version while retaining the three-part structure:
+
+  Detailed Summary:
+  {text}
+
+  Shortened Summary:
+
+lengthen: |
+  You are assisting with summarizing long research papers. 
+  Below is a brief summary of a research paper. 
+  Expand it into a more detailed version while retaining the three-part structure:
+
+  Brief Summary:
+  {text}
+
+  Lengthened Summary:
+
+rewrite: |
+  You are assisting with summarizing long research papers. 
+  Below is a summary of a research paper. 
+  Rewrite it to improve clarity, coherence, and academic tone while retaining the three-part structure:
+
+  Original Summary:
+  {text}
+
+  Rewritten Summary:
+
+simplify: |
+  You are assisting with summarizing long research papers. 
+  Below is a summary of a research paper. 
+  Simplify the language to make it more accessible while retaining the three-part structure:
+
+  Original Summary:
+  {text}
+
+  Simplified Summary:

@@ -13,7 +13,7 @@ load_dotenv()
 
 class Summarizer(LLMClient):
     """Base Summarizer class using LLMClient and PromptManager."""
-    def __init__(self, model="gpt-3.5-turbo", temperature=0, **kwargs):
+    def __init__(self, model=None, temperature=0, **kwargs):
         super().__init__(model=model, temperature=temperature, **kwargs)
         self.prompt_manager = PromptManager()
 
@@ -27,7 +27,7 @@ class Summarizer(LLMClient):
 
 class ZeroShotSummarizer(Summarizer):
     """Zero-Shot Summarizer using predefined prompts."""
-    def __init__(self, model="gpt-3.5-turbo", temperature=0, **kwargs):
+    def __init__(self, model=None, temperature=0, **kwargs):
         super().__init__(model=model, temperature=temperature, **kwargs)
 
     def summarize(self, text: str) -> str:
@@ -39,7 +39,7 @@ class RAGSummarizer(Summarizer):
     and retrieves relevant chunks for summarization.
     """
 
-    def __init__(self, model="gpt-3.5-turbo", temperature=0, **kwargs):
+    def __init__(self, model=None, temperature=0, **kwargs):
         super().__init__(model=model, temperature=temperature, **kwargs)
 
     def split_text(self, text: str, chunk_size=500, overlap=50):
@@ -74,7 +74,7 @@ class RAGSummarizer(Summarizer):
 
 class MapReduceSummarizer(Summarizer):
     """Map-Reduce Summarizer (Placeholder for future implementation)."""
-    def __init__(self, model="gpt-3.5-turbo", temperature=0, **kwargs):
+    def __init__(self, model=None, temperature=0, **kwargs):
         super().__init__(model=model, temperature=temperature, **kwargs)
 
     def split_by_paragraph(self, text: str) -> list[str]:
