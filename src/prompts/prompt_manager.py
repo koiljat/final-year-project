@@ -1,10 +1,15 @@
 import yaml
 from langchain.prompts import PromptTemplate
 
+import os
 class PromptManager:
-    def __init__(self, filepath: str="prompts/prompts.yaml"):
+    def __init__(self, filepath: str=None):
+        if filepath is None:
+            base_dir = os.path.dirname(__file__)
+            filepath = os.path.join(base_dir, "prompts.yaml")
         with open(filepath, "r") as f:
             self.prompts = yaml.safe_load(f)
+
 
     def get(self, key: str) -> PromptTemplate:
         if key not in self.prompts:
