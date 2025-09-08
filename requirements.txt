@@ -2,7 +2,8 @@
 langchain_openai
 langchain
 langchain_community
-
+langchain_google_genai
+langchain_perplexity
 # Environment variable management
 python-dotenv
 
