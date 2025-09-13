@@ -9,7 +9,6 @@ from llm.summarize.summarizer import (
 )
 import traceback
 import PyPDF2
-import os
 
 
 class SummarizationApp:
@@ -43,8 +42,6 @@ class SummarizationApp:
         .metrics-container {background-color:#e8f4fd;border-radius:8px;padding:1rem;margin:1rem 0;}
         .stButton > button {width:100%;border-radius:8px;font-weight:600;transition:all 0.3s ease;}
         .stButton > button:hover {transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.1);}
-        .api-key-container {background-color:#fff3cd;border:1px solid #ffeaa7;border-radius:8px;padding:1rem;margin:1rem 0;}
-        .api-key-warning {color:#856404;font-weight:500;}
         </style>
         """,
             unsafe_allow_html=True,
@@ -67,73 +64,10 @@ class SummarizationApp:
             "provider": "openai",
             "creativity_level": 0.7,
             "complexity_level": 3,
-            "api_key_validated": False,
         }
         for key, value in defaults.items():
             if key not in st.session_state:
                 st.session_state[key] = value
-
-    # ---------------------------
-    # API Key Management
-    # ---------------------------
-    def check_api_key(self, provider: str) -> bool:
-        """Check if API key exists in environment variables"""
-        key_mapping = {
-            "openai": "OPENAI_API_KEY",
-            "perplexity": "PERPLEXITY_API_KEY",
-            "gemini": "GEMINI_API_KEY"
-        }
-        
-        env_key = key_mapping.get(provider)
-        if env_key:
-            return bool(os.getenv(env_key))
-        return False
-
-    def set_api_key(self, provider: str, api_key: str):
-        """Set API key in environment variables"""
-        key_mapping = {
-            "openai": "OPENAI_API_KEY",
-            "perplexity": "PERPLEXITY_API_KEY",
-            "gemini": "GEMINI_API_KEY"
-        }
-        
-        env_key = key_mapping.get(provider)
-        if env_key and api_key.strip():
-            os.environ[env_key] = api_key.strip()
-            return True
-        return False
-
-    def render_api_key_input(self, provider: str) -> bool:
-        """Render API key input interface and return whether key is valid"""
-        st.markdown(
-            '<div class="api-key-container">'
-            '<p class="api-key-warning">⚠️ API Key Required</p>'
-            f'<p>Please enter your {provider.title()} API key to continue.</p>'
-            '</div>',
-            unsafe_allow_html=True
-        )
-        
-        api_key = st.text_input(
-            f"Enter your {provider.title()} API Key:",
-            type="password",
-            key=f"api_key_input_{provider}",
-            help=f"Your {provider.title()} API key will be stored securely for this session only."
-        )
-        
-        col1, col2 = st.columns([1, 3])
-        with col1:
-            if st.button(f"Validate Key", key=f"validate_{provider}"):
-                if api_key.strip():
-                    if self.set_api_key(provider, api_key):
-                        st.session_state["api_key_validated"] = True
-                        st.success(f"✅ {provider.title()} API key validated successfully!")
-                        st.rerun()
-                    else:
-                        st.error("❌ Invalid API key format")
-                else:
-                    st.warning("Please enter your API key")
-        
-        return False
 
     # ---------------------------
     # Metrics Calculation & Display
@@ -221,30 +155,6 @@ class SummarizationApp:
     def render_sidebar(self):
         with st.sidebar:
             st.markdown("### ⚙️ Settings")
-            
-            # Provider selection
-            st.session_state["provider"] = st.selectbox(
-                "Select API Provider:",
-                ["perplexity", "openai", "gemini"],
-                index=["perplexity", "openai", "gemini"].index(
-                    st.session_state.get("provider", "openai")
-                ),
-                on_change=lambda: st.session_state.update({"api_key_validated": False})
-            )
-            
-            # API Key status
-            current_provider = st.session_state["provider"]
-            has_api_key = self.check_api_key(current_provider)
-            
-            if has_api_key:
-                st.success(f"✅ {current_provider.title()} API key found")
-                st.session_state["api_key_validated"] = True
-            else:
-                st.warning(f"⚠️ No {current_provider.title()} API key found")
-                st.session_state["api_key_validated"] = False
-            
-            st.markdown("---")
-            
             st.session_state["creativity_level"] = st.slider(
                 "Creativity Level",
                 0.1,
@@ -255,7 +165,14 @@ class SummarizationApp:
             st.session_state["complexity_level"] = st.slider(
                 "Complexity Level", 1, 5, st.session_state.get("complexity_level", 3)
             )
-            
+            st.markdown("---")
+            st.session_state["provider"] = st.selectbox(
+                "Select API Provider:",
+                ["perplexity", "openai", "gemini"],
+                index=["perplexity", "openai", "gemini"].index(
+                    st.session_state.get("provider", "openai")
+                ),
+            )
             st.markdown("---")
             st.markdown("### 📁 Upload File")
             file = st.file_uploader(
@@ -298,16 +215,6 @@ class SummarizationApp:
         )
         self.render_sidebar()
 
-        # Check if API key is available
-        current_provider = st.session_state["provider"]
-        has_api_key = self.check_api_key(current_provider)
-        
-        if not has_api_key and not st.session_state.get("api_key_validated"):
-            # Show API key input if no key found
-            if not self.render_api_key_input(current_provider):
-                st.info("Please enter your API key to continue using the application.")
-                return
-
         # Input Section (Top)
         st.markdown(
             '<h2 class="section-header">📝 Input</h2>', unsafe_allow_html=True
@@ -339,14 +246,7 @@ class SummarizationApp:
         # Actions
         col_btn1, col_btn2 = st.columns([1, 1])
         with col_btn1:
-            # Disable button if no API key
-            button_disabled = not (has_api_key or st.session_state.get("api_key_validated"))
-            
-            if st.button(
-                "🚀 Generate Summary", 
-                use_container_width=True, 
-                disabled=button_disabled
-            ):
+            if st.button("🚀 Generate Summary", use_container_width=True):
                 if summarize_input and summarize_input.strip():
                     with st.spinner("Processing..."):
                         result = self.process_text(method, summarize_input)
@@ -364,9 +264,6 @@ class SummarizationApp:
                             st.success("Summary generated successfully!")
                 else:
                     st.warning("Please enter some text to summarize.")
-            
-            if button_disabled:
-                st.caption("⚠️ API key required to generate summaries")
 
         with col_btn2:
             if st.button("🗑️ Clear All", use_container_width=True):
@@ -441,16 +338,10 @@ class SummarizationApp:
                         spacer,
                     ) = st.columns([1, 1, 1, 1, 20])
 
-                    # Check if API key is available for post-processing
-                    processing_disabled = not (has_api_key or st.session_state.get("api_key_validated"))
-
                     with post_processing_1:
                         if edited_text:
                             if st.button(
-                                "✨", 
-                                key=f"simplify_{i}", 
-                                help="Simplify this paragraph",
-                                disabled=processing_disabled
+                                "✨", key=f"simplify_{i}", help="Simplify this paragraph"
                             ):
                                 processed_para = self.apply_post_processing(
                                     "Simplify", edited_text
@@ -462,10 +353,7 @@ class SummarizationApp:
                     with post_processing_2:
                         if edited_text:
                             if st.button(
-                                "📝", 
-                                key=f"shorten_{i}", 
-                                help="Shorten this paragraph",
-                                disabled=processing_disabled
+                                "📝", key=f"shorten_{i}", help="Shorten this paragraph"
                             ):
                                 processed_para = self.apply_post_processing(
                                     "Shorten", edited_text
@@ -524,16 +412,12 @@ class SummarizationApp:
                     spacer, 
                 ) = st.columns([1, 1, 10])
                 
-                # Check if API key is available for post-processing
-                processing_disabled = not (has_api_key or st.session_state.get("api_key_validated"))
-                
                 with full_post_1:
                     if edited_full_output:
                         if st.button(
                             "✨", 
                             key="simplify_full", 
-                            help="Simplify the entire summary",
-                            disabled=processing_disabled
+                            help="Simplify the entire summary"
                         ):
                             processed_full = self.apply_post_processing(
                                 "Simplify", edited_full_output
@@ -548,8 +432,7 @@ class SummarizationApp:
                         if st.button(
                             "📝", 
                             key="shorten_full", 
-                            help="Shorten the entire summary",
-                            disabled=processing_disabled
+                            help="Shorten the entire summary"
                         ):
                             processed_full = self.apply_post_processing(
                                 "Shorten", edited_full_output
@@ -558,9 +441,6 @@ class SummarizationApp:
                                 # Split the processed text back into paragraphs
                                 st.session_state["result_ls"] = processed_full.split("\n\n")
                                 st.rerun()
-                
-                if processing_disabled:
-                    st.caption("⚠️ API key required for post-processing")
                 
                 # Update session state if full output was edited
                 if edited_full_output != full_output:
