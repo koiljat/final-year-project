@@ -211,3 +211,5 @@ documents/*.pdf
 .DS_Store
 
 *.csv
+
+TODO.md
