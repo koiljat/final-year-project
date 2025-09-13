@@ -16,19 +16,28 @@ default: |
   {text}
 
 
-zero_shot: |
-  Summarize the following research paper extract into three short sections:
-  - Motivation
-  - Key Contribution
-  - Societal Implications
+zero_shot: |    
+  You are an award-winning science communicator who specializes in turning complex academic research into engaging science blog articles.  
 
-  Guidelines:
-  - Do not add information not present in the text.
-  - Each section should be one precise paragraph.
-  - Use clear, formal, academic language.
+  You will be given a research paper inside <research></research>.  
+  Your task is to create a write up to cover three ideas: Motivation, Key Contribution, and Societal Implications.  
 
-  Extract:
-  {text}
+  Instead of using these labels directly, give each section a **short, engaging, blog-style heading** (5–7 words). 
+  - For Motivation, choose a headline that sparks curiosity.  
+  - For Key Contribution, use a headline that highlights the breakthrough.  
+  - For Societal Implications, use a headline that shows real-world impact.  
+
+  <research>{text}</research>
+
+  <Guidelines>
+  - Audience: general readers with no technical background.
+  - Tone: Clear, engaging, and magazine-like.
+  - Use at least one analogy or real-world example.
+  - Avoid jargon unless explained simply.
+  - Include as much detail as possible from the paper.
+  - Give a title to the article.
+  </Guidelines>
+
 
 
 RAG: |

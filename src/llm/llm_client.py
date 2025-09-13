@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class LLMClient:
-    def __init__(self, provider="gemini", model=None, temperature=0):
+    def __init__(self, provider="openai", model=None, temperature=0, **kwargs):
         """
         Initializes the LLM client with the specified provider, model, and temperature.
         Loads environment variables using `load_dotenv()`. Sets up the language model interface
@@ -26,18 +26,24 @@ class LLMClient:
         """
         load_dotenv()
         self.provider = provider.lower()
-        logger.info(f"Initializing LLMClient with provider: {self.provider}, model: {model if model else "default"}, temperature: {temperature}")
+        logger.info(
+            f"Initializing LLMClient with provider: {self.provider}, model: {model if model else 'default'}, temperature: {temperature}"
+        )
 
         if self.provider == "openai":
             logger.info("Using OpenAI provider")
             self.llm = ChatOpenAI(model=model or "gpt-4o-mini", temperature=temperature)
-        
+
         elif self.provider == "perplexity":
             logger.info("Using Perplexity provider")
-            self.llm = ChatPerplexity(model=model or "sonar", temperature=temperature)
+            self.llm = ChatPerplexity(
+                model=model or "sonar", temperature=temperature, timeout=30
+            )
         elif self.provider == "gemini":
             logger.info("Using Gemini provider")
-            self.llm = ChatGoogleGenerativeAI(model=model or "gemini-2.5-flash", temperature=temperature)
+            self.llm = ChatGoogleGenerativeAI(
+                model=model or "gemini-2.5-flash", temperature=temperature
+            )
         else:
             logger.error(f"Unknown provider: {provider}")
             raise ValueError(f"Unknown provider: {provider}")
@@ -56,7 +62,7 @@ class LLMClient:
         res = self.llm.invoke(prompt)
         logger.info(f"Received response: {res.content}")
         return str(res.content)
-    
+
     def set_provider(self, provider: str):
         """
         Sets the provider for the client.
@@ -67,6 +73,7 @@ class LLMClient:
         """
         logger.info(f"Setting provider to: {provider}")
         self.provider = provider.lower()
+
 
 if __name__ == "__main__":
     client = LLMClient(provider="gemini")

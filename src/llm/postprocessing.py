@@ -14,3 +14,7 @@ class PostProcessor(LLMClient):
     def process(self, text: str, mode="default") -> str:
         prompt = self.prompt_manager.get(mode).format(text=text)
         return self.run(prompt)
+    
+    def split_by_paragraph(self, text: str) -> list[str]:
+        """Splits the text into paragraphs."""
+        return [para.strip() for para in text.split("\n\n") if para.strip()]
