@@ -1,9 +1,10 @@
 import yaml
 from langchain.prompts import PromptTemplate
+from typing import Optional
 
 import os
 class PromptManager:
-    def __init__(self, filepath: str=None):
+    def __init__(self, filepath: Optional[str]=None):
         if filepath is None:
             base_dir = os.path.dirname(__file__)
             filepath = os.path.join(base_dir, "prompts.yaml")
