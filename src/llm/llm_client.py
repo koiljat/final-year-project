@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class LLMClient:
-    def __init__(self, provider="openai", model=None, temperature=0, **kwargs):
+    def __init__(self, provider="openai", model=None, temperature=0.0, **kwargs):
         """
         Initializes the LLM client with the specified provider, model, and temperature.
         Loads environment variables using `load_dotenv()`. Sets up the language model interface
