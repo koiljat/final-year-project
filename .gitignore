@@ -213,3 +213,7 @@ documents/*.pdf
 *.csv
 
 TODO.md
+
+notebooks/
+
+assets/

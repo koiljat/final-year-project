@@ -1,8 +1,7 @@
 import streamlit as st
 import time
 from typing import Optional, Dict, Any
-from llm.postprocessing import PostProcessor
-from llm.summarize.summarizer import (
+from services.summarize.summarizer import (
     RAGSummarizer,
     ZeroShotSummarizer,
     MapReduceSummarizer,
@@ -10,35 +9,30 @@ from llm.summarize.summarizer import (
 import traceback
 import PyPDF2
 
-from llm.visualize.visualizer import Visualizer
+from services.visualize.visualizer import Visualizer
 import streamlit.components.v1 as components
 import re
 import random
+from ui.styles.css_styles import apply_custom_styles
+from config.models import DEFAULT_SESSION_STATE, get_provider_for_model
+from services.summarize.summarizers_registry import SUMMARIZERS, get_summarizer
+from services.postprocessing.registry import get_post_processor
 
 
 class SummarizationApp:
     def __init__(self):
-        self.summarizers = {
-            "Default": {
-                "obj": ZeroShotSummarizer(),
-                "desc": "Quick and efficient summarization",
-                "icon": "⚡",
-            },
-            "RAG": {
-                "obj": RAGSummarizer(),
-                "desc": "Retrieval-augmented generation for enhanced context",
-                "icon": "🧠",
-            },
-            "MapReduce": {
-                "obj": MapReduceSummarizer(),
-                "desc": "Hierarchical summarization for long documents",
-                "icon": "🗂️",
-            },
-        }  # Add more summarization methods as needed
-
         self.visualizer = Visualizer(temperature=0.5)
         self.setup_page_config()
         self.initialize_session_state()
+        self.model_names_mapping = {
+                "gpt-5": "openai",
+                "gpt-4.1": "openai",
+                "gpt-4o": "openai",
+                "gpt-4": "openai",
+                "o4-mini": "openai",
+                "gemini-2.5-flash": "gemini",
+                "sonar": "perplexity"
+            }
 
     def setup_page_config(self):
         """
@@ -52,364 +46,11 @@ class SummarizationApp:
             initial_sidebar_state="expanded",
         )
 
-        st.markdown(
-            """
-        <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        apply_custom_styles()
         
-        .main-header {
-            text-align: center;
-            background-clip: text;
-            font-size: 3rem;
-            font-weight: 700;
-            color: #08acfc;
-            margin-bottom: 0.5rem;
-            font-family: 'Inter', sans-serif;
-        }
-        
-        .subtitle {
-            text-align: center;
-            color: #08acfc;
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            font-weight: 400;
-            font-family: 'Inter', sans-serif;
-        }
-        
-        .section-header {
-            color: #2c3e50;
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin: 2rem 0 1rem 0;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #e9ecef;
-            font-family: 'Inter', sans-serif;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .method-card {
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 1rem;
-            margin: 0.5rem 0;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-        }
-        
-        .method-card:hover {
-            border-color: #667eea;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-            transform: translateY(-2px);
-        }
-        
-        .method-card.selected {
-            border-color: #667eea;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-        }
-        
-        .method-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .method-title {
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 0.25rem;
-            color: #2c3e50;
-        }
-        
-        .method-desc {
-            color: #6c757d;
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-        
-        .input-section {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 2rem;
-            margin: 1.5rem 0;
-            border: 1px solid #e9ecef;
-        }
-        
-        .results-section {
-            background: white;
-            border-radius: 15px;
-            padding: 2rem;
-            margin: 1.5rem 0;
-            border: 1px solid #e9ecef;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        
-        .metrics-container {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            border: 1px solid #dee2e6;
-        }
-        
-        .metric-card {
-            background: white;
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        
-        .metric-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 0.25rem;
-        }
-        
-        .metric-label {
-            font-size: 0.9rem;
-            color: #6c757d;
-            font-weight: 500;
-        }
-        
-        .paragraph-container {
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            position: relative;
-            transition: all 0.3s ease;
-        }
-        
-        .paragraph-container:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border-color: #667eea;
-        }
-        
-        .paragraph-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .paragraph-title {
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 1rem;
-        }
-        
-        .paragraph-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .action-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-        
-        .action-btn:hover {
-            background: #5a6fd8;
-            transform: translateY(-1px);
-        }
-        
-        .action-btn.danger {
-            background: #dc3545;
-        }
-        
-        .action-btn.danger:hover {
-            background: #c82333;
-        }
-        
-        .progress-container {
-            background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            border: 1px solid #e9ecef;
-            text-align: center;
-        }
-        
-        .upload-area {
-            border: 2px dashed #cbd5e0;
-            border-radius: 12px;
-            padding: 2rem;
-            text-align: center;
-            background: #f7fafc;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .upload-area:hover {
-            border-color: #667eea;
-            background: #f0f4ff;
-        }
-        
-        .upload-icon {
-            font-size: 3rem;
-            color: #a0aec0;
-            margin-bottom: 1rem;
-        }
-        
-        .upload-text {
-            color: #4a5568;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-        
-        .upload-subtext {
-            color: #718096;
-            font-size: 0.9rem;
-        }
-        
-        .success-banner {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-            color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            margin: 1rem 0;
-            text-align: center;
-            font-weight: 500;
-        }
-        
-        .warning-banner {
-            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
-            color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            margin: 1rem 0;
-            text-align: center;
-            font-weight: 500;
-        }
-        
-        .stButton > button {
-            width: 100%;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            font-family: 'Inter', sans-serif;
-            padding: 0.7rem 1.5rem;
-        }
-        
-        .stButton > button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        .primary-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            color: white !important;
-            border: none !important;
-        }
-        
-        .secondary-btn {
-            background: #6c757d !important;
-            color: white !important;
-            border: none !important;
-        }
-        
-        .stSelectbox > div > div {
-            border-radius: 8px;
-            border: 2px solid #e9ecef;
-            font-family: 'Inter', sans-serif;
-        }
-        
-        .stTextArea > div > div > textarea {
-            border-radius: 8px;
-            border: 2px solid #e9ecef;
-            font-family: 'Inter', sans-serif;
-            resize: vertical;
-        }
-        
-        .stTextArea > div > div > textarea:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-        
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 200px;
-            background-color: #2c3e50;
-            color: white;
-            text-align: center;
-            border-radius: 6px;
-            padding: 8px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -100px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 0.8rem;
-        }
-        
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
-        }
-        </style>
-        """,
-            unsafe_allow_html=True,
-        )
 
     def initialize_session_state(self):
-        """Initializes default values in Streamlit's session state."""
-
-        defaults = {
-            "summarize_input": "",
-            "current_result": None,
-            "processed_result": None,
-            "result_ls": None,
-            "processing_time": None,
-            "original_word_count": 0,
-            "summary_word_count": 0,
-            "file_uploaded": False,
-            "provider": "openai",
-            "temperature": 0.0,
-            "selected_method": "Default",
-            "processing_status": None,
-            "show_advanced_settings": False,
-            "max_tokens": 500,
-            "top_p": 0.01,
-            "frequency_penalty": 0.0,
-            "presence_penalty": 0.0,
-        }
-        for key, value in defaults.items():
+        for key, value in DEFAULT_SESSION_STATE.items():
             if key not in st.session_state:
                 st.session_state[key] = value
 
@@ -471,16 +112,11 @@ class SummarizationApp:
     def render_method_selection(self):
         st.markdown("### 🔧 Select Summarization Method")
 
-        cols = st.columns(3)
+        cols = st.columns(len(SUMMARIZERS))
 
-        for idx, (method, details) in enumerate(self.summarizers.items()):
+        for idx, (method, info) in enumerate(SUMMARIZERS.items()):
             with cols[idx]:
-                if st.button(
-                    f"{details['icon']} {method}",
-                    key=f"method_{method}",
-                    help=details["desc"],
-                    use_container_width=True,
-                ):
+                if st.button(f"{info.icon} {method}", help=info.desc, use_container_width=True):
                     st.session_state["selected_method"] = method
 
     def fake_progress(
@@ -501,24 +137,21 @@ class SummarizationApp:
             self.fake_progress(progress_bar, status_text, 0, 15)
 
             start = time.time()
-            if method in self.summarizers:
-                status_text.text(f"🧠 Running {method} summarization...")
-                self.fake_progress(progress_bar, status_text, 15, 40)
+            summarizer = get_summarizer(
+                method,
+                model=st.session_state["model_name"],
+                temperature=st.session_state["temperature"]
+            )
+            summarizer.set_provider(st.session_state["provider"])
 
-                summarizer = self.summarizers[method]["obj"]
-                summarizer.set_provider(st.session_state["provider"])
+            self.fake_progress(progress_bar, status_text, 40, 75)
 
-                if hasattr(summarizer, "set_temperature"):
-                    summarizer.set_temperature(st.session_state["temperature"])
+            # Run summarization
+            result = summarizer.summarize(text)
 
-                self.fake_progress(progress_bar, status_text, 40, 75)
-
-                result = summarizer.summarize(text)
-
-                self.fake_progress(progress_bar, status_text, 75, 95)
-
-                status_text.text("✅ Processing complete!")
-                self.fake_progress(progress_bar, status_text, 95, 100)
+            self.fake_progress(progress_bar, status_text, 75, 95)
+            status_text.text("✅ Processing complete!")
+            self.fake_progress(progress_bar, status_text, 95, 100)
 
             processing_time = time.time() - start
             st.session_state["processing_time"] = processing_time
@@ -547,26 +180,14 @@ class SummarizationApp:
                 st.code(traceback.format_exc())
             return None
 
-    def apply_post_processing(self, operation: str, text: str) -> str:
-        post_processor = PostProcessor()
-        post_processor.set_provider(st.session_state["provider"])
-
+    def apply_post_processing(self, operation: str, text: str):
         try:
-            with st.spinner(f"🔄 Applying {operation.lower()}..."):
-                operations = {
-                    "Simplify": "simplify",
-                    "Shorten": "shorten",
-                    "Expand": "expand",
-                    "Rephrase": "rephrase",
-                }
-                mode = operations.get(operation)
-                if mode:
-                    result = post_processor.process(text, mode=mode)
-                    st.success(f"✅ {operation} applied successfully!")
-                    return result
-                else:
-                    st.warning(f"⚠️ Unknown operation: {operation}")
-                    return text
+            processor = get_post_processor(
+                operation,
+                model=st.session_state.get("model_name"),
+                temperature=st.session_state.get("temperature", 0.7),
+            )
+            return processor.process(text)
         except Exception as e:
             st.error(f"❌ Post-processing error: {str(e)}")
             return text
@@ -633,30 +254,35 @@ class SummarizationApp:
     def render_sidebar(self):
         with st.sidebar:
             st.image(
-                "assets/images/logos/selene-logo-640.png", use_container_width=True
+                "assets/images/logos/selene-logo-640.png", width="stretch"
             )
 
             st.markdown("---")
             st.markdown("#### 🔌 API Provider")
-            # TODO: Upgrade this to selection of specific models per provider
-            st.session_state["provider"] = st.selectbox(
-                "Select Provider:",
-                ["openai", "perplexity", "gemini"],
-                index=["openai", "perplexity", "gemini"].index(
-                    st.session_state.get("provider", "openai")
-                ),
-                help="Choose your preferred AI provider",
+            st.session_state["model_name"] = st.selectbox(
+                "Select Model:",
+                [
+                    "gpt-5",
+                    "gpt-4.1",
+                    "gpt-4o",
+                    "gpt-4",
+                    "o4-mini",
+                    "gemini-2.5-flash",
+                    "sonar",
+                ],
+                index=[
+                    "gpt-5",
+                    "gpt-4.1",
+                    "gpt-4o",
+                    "gpt-4",
+                    "o4-mini",
+                    "gemini-2.5-flash",
+                    "sonar",
+                ].index(st.session_state.get("model_name", "gpt-4o")),
+                help="Choose your preferred AI Model",
             )
-
-            provider_status = {
-                "openai": ("🟢", "Stable"),
-                "perplexity": ("🟡", "Beta"),
-                "gemini": ("🟢", "Stable"),
-            }
-            status_color, status_text = provider_status.get(
-                st.session_state["provider"], ("🔴", "Unknown")
-            )
-            st.caption(f"{status_color} Status: {status_text}")
+            
+            st.session_state["provider"] = get_provider_for_model(st.session_state["model_name"])
 
             st.markdown("---")
             st.markdown("#### ⚙️ Settings")
@@ -773,7 +399,6 @@ class SummarizationApp:
             metrics = {
                 "original_words": st.session_state.get("original_word_count", 0),
                 "summary_words": st.session_state.get("summary_word_count", 0),
-                "compression_ratio": st.session_state.get("compression_ratio", 0),
             }
             self.display_metrics(metrics, st.session_state["processing_time"])
 
@@ -797,7 +422,7 @@ class SummarizationApp:
             col1, col2 = st.columns([3, 1])
             with col1:
                 st.markdown(
-                    f'<div class="paragraph-title">📄 Paragraph {i+1}</div>',
+                    f'<div class="paragraph-title">📄 Section {i+1}</div>',
                     unsafe_allow_html=True,
                 )
             with col2:
@@ -841,14 +466,12 @@ class SummarizationApp:
                             key=f"apply_{selected_action}_{i}",
                             use_container_width=True,
                         ):
-                            with st.spinner(f"{selected_action}..."):
-                                processed = self.apply_post_processing(
-                                    selected_action, str(edited_text)
-                                )
-                                if processed != edited_text:
-                                    st.session_state["result_ls"][i] = processed
-                                    st.success(f"✅ {selected_action} applied!")
-                                    st.rerun()
+                            processed = self.apply_post_processing(
+                                selected_action, str(edited_text)
+                            )
+                            if processed != edited_text:
+                                st.session_state["result_ls"][i] = processed
+                                st.rerun()
 
             with col2:
                 st.download_button(
@@ -979,6 +602,13 @@ class SummarizationApp:
             st.session_state["result_ls"] = [
                 p.strip() for p in edited_full.split("\n\n") if p.strip()
             ]
+            
+    def render_html_images(self):
+        html_code = """'<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>How Transformers Changed the Way Machines Understand Language</title>\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <style>\n    body {\n      font-family: \'Segoe UI\', Arial, sans-serif;\n      background: #f7f9fb;\n      margin: 0;\n      padding: 0;\n      color: #222;\n    }\n    .infographic-container {\n      max-width: 900px;\n      margin: 40px auto;\n      background: #fff;\n      border-radius: 18px;\n      box-shadow: 0 4px 24px rgba(0,0,0,0.08);\n      padding: 40px 30px;\n    }\n    .title {\n      text-align: center;\n      font-size: 2.2em;\n      font-weight: bold;\n      color: #3a7bd5;\n      margin-bottom: 10px;\n    }\n    .subtitle {\n      text-align: center;\n      font-size: 1.2em;\n      color: #555;\n      margin-bottom: 30px;\n    }\n    .section {\n      display: flex;\n      align-items: flex-start;\n      margin-bottom: 40px;\n      gap: 24px;\n    }\n    .section-icon {\n      flex-shrink: 0;\n      width: 64px;\n      height: 64px;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      background: #e3ecfa;\n      border-radius: 50%;\n      font-size: 2.2em;\n      color: #3a7bd5;\n      box-shadow: 0 2px 8px rgba(58,123,213,0.08);\n    }\n    .section-content {\n      flex: 1;\n    }\n    .section-title {\n      font-size: 1.3em;\n      font-weight: bold;\n      color: #3a7bd5;\n      margin-bottom: 6px;\n    }\n    .section-desc {\n      font-size: 1.05em;\n      color: #333;\n      margin-bottom: 6px;\n    }\n    .arrow {\n      text-align: center;\n      font-size: 2.5em;\n      color: #b0b8c1;\n      margin: -20px 0 10px 0;\n    }\n    .highlight {\n      background: #e3ecfa;\n      border-radius: 6px;\n      padding: 2px 6px;\n      color: #3a7bd5;\n      font-weight: 500;\n    }\n    @media (max-width: 700px) {\n      .infographic-container { padding: 20px 5px; }\n      .section { flex-direction: column; align-items: center; gap: 10px; }\n      .section-icon { margin-bottom: 8px; }\n    }\n  </style>\n</head>\n<body>\n  <div class="infographic-container">\n    <div class="title">How Transformers Changed the Way Machines Understand Language</div>\n    <div class="subtitle">A Visual Journey from Old AI to the Age of Transformers</div>\n\n    <!-- Section 1: The Old Way -->\n    <div class="section">\n      <div class="section-icon" title="Old AI">\n        <!-- Flashlight Icon (SVG) -->\n        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">\n          <rect x="7" y="2" width="10" height="6" rx="2" fill="#3a7bd5"/>\n          <rect x="9" y="8" width="6" height="10" rx="2" fill="#b0b8c1"/>\n          <rect x="10" y="18" width="4" height="4" rx="1" fill="#3a7bd5"/>\n        </svg>\n      </div>\n      <div class="section-content">\n        <div class="section-title">The Old Way: Step-by-Step Reading</div>\n        <div class="section-desc">\n          <span class="highlight">Recurrent Neural Networks (RNNs)</span> read sentences <b>one word at a time</b>, like using a flashlight in a dark room.<br>\n          <b>Problems:</b> Slow, forgetful, and struggle with long-range connections.<br>\n          <i>Example:</i> Hard to link <span class="highlight">"cat"</span> and <span class="highlight">"sat"</span> in a long sentence.\n        </div>\n      </div>\n    </div>\n\n    <div class="arrow">&#8595;</div>\n\n    <!-- Section 2: The Breakthrough -->\n    <div class="section">\n      <div class="section-icon" title="Transformer">\n        <!-- Lightbulb Icon (SVG) -->\n        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">\n          <ellipse cx="12" cy="10" rx="7" ry="7" fill="#3a7bd5"/>\n          <rect x="9" y="17" width="6" height="3" rx="1.5" fill="#b0b8c1"/>\n          <rect x="10" y="20" width="4" height="2" rx="1" fill="#3a7bd5"/>\n        </svg>\n      </div>\n      <div class="section-content">\n        <div class="section-title">The Breakthrough: Attention Is All You Need</div>\n        <div class="section-desc">\n          <span class="highlight">Transformers</span> see the <b>whole sentence at once</b>, like turning on the lights.<br>\n          <b>Key innovation:</b> <span class="highlight">Attention mechanism</span> focuses on important words, wherever they are.<br>\n          <b>Multi-head attention:</b> Like a team of readers, each spotting different patterns.<br>\n          <b>Results:</b> Faster, smarter, and more accurate—especially in translation and understanding context.\n        </div>\n      </div>\n    </div>\n\n    <div class="arrow">&#8595;</div>\n\n    <!-- Section 3: Real-World Impact -->\n    <div class="section">\n      <div class="section-icon" title="Impact">\n        <!-- Globe/AI Icon (SVG) -->\n        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">\n          <circle cx="12" cy="12" r="10" fill="#3a7bd5"/>\n          <ellipse cx="12" cy="12" rx="6" ry="10" fill="#e3ecfa"/>\n          <ellipse cx="12" cy="12" rx="10" ry="3" fill="#b0b8c1"/>\n        </svg>\n      </div>\n      <div class="section-content">\n        <div class="section-title">Why This Matters: Everyday AI</div>\n        <div class="section-desc">\n          <b>Transformers</b> power <span class="highlight">virtual assistants</span>, <span class="highlight">real-time translators</span>, <span class="highlight">smart chatbots</span>, and more.<br>\n          <b>Parallel processing</b> means faster, more scalable AI.<br>\n          <b>Impact:</b> More human-like, helpful, and accessible AI for everyone.\n        </div>\n      </div>\n    </div>\n\n    <div class="arrow">&#8595;</div>\n\n    <!-- Section 4: The New Era -->\n    <div class="section">\n      <div class="section-icon" title="Future">\n        <!-- Rocket Icon (SVG) -->\n        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">\n          <path d="M12 2 L15 8 L12 14 L9 8 Z" fill="#3a7bd5"/>\n          <circle cx="12" cy="16" r="2" fill="#b0b8c1"/>\n          <rect x="11" y="18" width="2" height="4" rx="1" fill="#3a7bd5"/>\n        </svg>\n      </div>\n      <div class="section-content">\n        <div class="section-title">A New Era of Language AI</div>\n        <div class="section-desc">\n          <b>Transformers</b> opened the door to smarter, faster, and more human-like AI.<br>\n          <b>From research labs to your phone</b>—they’re changing how we interact with technology every day.\n        </div>\n      </div>\n    </div>\n  </div>\n</body>\n</html>'
+        """
+
+        components.html(html_code, height=800, width=800, scrolling=False)
+
 
     def render_main_interface(self):
         st.markdown(

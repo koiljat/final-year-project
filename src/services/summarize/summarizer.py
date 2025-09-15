@@ -1,4 +1,4 @@
-from llm.llm_client import LLMClient
+from services.llm_client import LLMClient
 from prompts.prompt_manager import PromptManager
 from dotenv import load_dotenv
 from langchain.embeddings import OpenAIEmbeddings

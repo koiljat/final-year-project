@@ -15,8 +15,8 @@ class LLMClient:
     def __init__(self, provider="openai", model=None, temperature=0.0, **kwargs):
         """
         Initializes the LLM client with the specified provider, model, and temperature.
-        Loads environment variables using `load_dotenv()`. Sets up the language model interface
-        based on the chosen provider ("openai" or "perplexity"). Raises a ValueError for unknown providers.
+        Loads environment variables using `load_dotenv()`. Sets up the language model interface based on the chosen provider. Raises a ValueError for unknown providers.
+
         Args:
             provider (str, optional): The LLM provider to use ("openai" or "perplexity"). Defaults to "perplexity".
             model (str, optional): The model name to use. Defaults to provider-specific default ("gpt-4o-mini" for OpenAI, "sonar" for Perplexity).
@@ -26,23 +26,24 @@ class LLMClient:
         """
         load_dotenv()
         self.provider = provider.lower()
+        self.model = model
         logger.info(
-            f"Initializing LLMClient with provider: {self.provider}, model: {model if model else 'default'}, temperature: {temperature}"
+            f"Initializing LLMClient with provider: {self.provider}, model: {self.model if self.model else 'default'}, temperature: {temperature}"
         )
 
         if self.provider == "openai":
             logger.info("Using OpenAI provider")
-            self.llm = ChatOpenAI(model=model or "gpt-4o-mini", temperature=temperature)
+            self.llm = ChatOpenAI(model=self.model or "gpt-4o-mini", temperature=temperature)
 
         elif self.provider == "perplexity":
             logger.info("Using Perplexity provider")
             self.llm = ChatPerplexity(
-                model=model or "sonar", temperature=temperature, timeout=30
+                model=self.model or "sonar", temperature=temperature, timeout=30
             )
         elif self.provider == "gemini":
             logger.info("Using Gemini provider")
             self.llm = ChatGoogleGenerativeAI(
-                model=model or "gemini-2.5-flash", temperature=temperature
+                model=self.model or "gemini-2.5-flash", temperature=temperature
             )
         else:
             logger.error(f"Unknown provider: {provider}")
@@ -73,8 +74,18 @@ class LLMClient:
         """
         logger.info(f"Setting provider to: {provider}")
         self.provider = provider.lower()
+        
+    def set_model(self, model: str):
+        """
+        Sets the model for the client.
+
+        Args:
+            model (str): The name of the model to set.
+
+        """
+        logger.info(f"Setting model to: {model}")
+        self.model = model
 
 
 if __name__ == "__main__":
-    client = LLMClient(provider="gemini")
-    print("Gemini:", client.run("Hello from Gemini!"))
+    client = LLMClient(provider="openai")

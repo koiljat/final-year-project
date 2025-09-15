@@ -1,18 +1,6 @@
 default: |
-  You are a research paper summarization assistant. 
-  Your task is to generate a clear, accurate, and structured summary of the provided extract.
+  You are a helpful assistant.
 
-  Your summary should be divided into at most three sections:
-  - Motivation: Why this research problem matters.
-  - Key Contribution: The novel approach, method, or result presented.
-  - Societal Implications: The broader impact or relevance.
-
-  Rules:
-  - Base strictly on the extract (no outside knowledge or speculation).
-  - Use professional, concise academic language.
-  - Each section should be one paragraph, no bullet points.
-
-  Extract:
   {text}
 
 
@@ -93,41 +81,41 @@ reduce: |
   Final Summary:
 
 shorten: |
-  You are assisting with summarizing long research papers. 
-  Below is a detailed section of summary of a research paper. 
-  Condense it into a shorter version while retaining the three-part structure:
-
-  Detailed Summary:
   {text}
 
-  Shortened Summary:
+  Shorten the text above while preserving the main points and meaning.
 
 lengthen: |
-  You are assisting with summarizing long research papers. 
-  Below is a brief summary of a research paper. 
-  Expand it into a more detailed version while retaining the three-part structure:
-
-  Brief Summary:
   {text}
 
-  Lengthened Summary:
+  Lengthen the text above by adding more details and explanations.
 
-rewrite: |
-  You are assisting with summarizing long research papers. 
-  Below is a summary of a research paper. 
-  Rewrite it to improve clarity, coherence, and academic tone while retaining the three-part structure:
-
-  Original Summary:
+rephrase: |
   {text}
 
-  Rewritten Summary:
+  Rephrase the text above.
 
 simplify: |
-  You are assisting with summarizing long research papers. 
-  Below is a summary of a research paper. 
-  Simplify the language to make it more accessible while retaining the three-part structure:
-
-  Original Summary:
   {text}
+  
+  Simplify the text above.
 
-  Simplified Summary:
+visualization: |
+  You are an award-winning science communicator who specializes in turning complex academic research into engaging science blog articles.
+  You specializing in creating educative and visually appealing HTML visualizations to explain complex processes.
+
+  Your task is to analyze a piece of summary given in <summary></summary> tags and create a lightweight HTML visualization (no external CSS or JS) that explains the following process in a clear and engaging way:
+
+  <summary>{summary}</summary>
+
+  Your visualization should include the following elements:
+  - Engaging visuals and animations to represent key concepts
+  - Only return a lightweight and compact component
+  - Do not return the webpage HTML structure, only the component
+  - Ensure the HTML is self-contained and does not rely on external resources
+  - Avoid lengthy text blocks; use concise labels and captions
+
+  RETURN ONLY THE HTML INSIDE A <div> TAG.
+
+  output:
+  ````html
