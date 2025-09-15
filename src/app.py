@@ -1,38 +1,29 @@
 import streamlit as st
 import time
 from typing import Optional, Dict, Any
-from services.summarize.summarizer import (
-    RAGSummarizer,
-    ZeroShotSummarizer,
-    MapReduceSummarizer,
-)
 import traceback
 import PyPDF2
 
 from services.visualize.visualizer import Visualizer
 import streamlit.components.v1 as components
-import re
 import random
 from ui.styles.css_styles import apply_custom_styles
-from config.models import DEFAULT_SESSION_STATE, get_provider_for_model
+from config.models import (
+    DEFAULT_SESSION_STATE,
+    AVAILABLE_MODELS,
+    DEFAULT_MODEL,
+    DEFAULT_MODEL_SETTINGS,
+    get_provider_for_model,
+)
 from services.summarize.summarizers_registry import SUMMARIZERS, get_summarizer
 from services.postprocessing.registry import get_post_processor
 
 
 class SummarizationApp:
     def __init__(self):
-        self.visualizer = Visualizer(temperature=0.5)
+        self.visualizer = Visualizer(temperature=0.3)
         self.setup_page_config()
         self.initialize_session_state()
-        self.model_names_mapping = {
-                "gpt-5": "openai",
-                "gpt-4.1": "openai",
-                "gpt-4o": "openai",
-                "gpt-4": "openai",
-                "o4-mini": "openai",
-                "gemini-2.5-flash": "gemini",
-                "sonar": "perplexity"
-            }
 
     def setup_page_config(self):
         """
@@ -47,7 +38,6 @@ class SummarizationApp:
         )
 
         apply_custom_styles()
-        
 
     def initialize_session_state(self):
         for key, value in DEFAULT_SESSION_STATE.items():
@@ -70,44 +60,23 @@ class SummarizationApp:
             "summary_chars": summary_chars,
         }
 
-    def display_metrics(self, metrics: Dict[str, Any], processing_time: float):
-
-        col1, col2, col3, col4, col5 = st.columns(
-            5
-        )  # col4 and col5 left empty for spacing / more metrics
-
-        with col1:
-            st.markdown(
-                f"""
-                <div class="metric-card">
-                    <div class="metric-value">{metrics['original_words']:,}</div>
-                    <div class="metric-label">Original Words</div>
-                </div>
+    def render_metric(self, col, value, label):
+        col.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-value">{value}</div>
+                <div class="metric-label">{label}</div>
+            </div>
             """,
-                unsafe_allow_html=True,
-            )
+            unsafe_allow_html=True,
+        )
 
-        with col2:
-            st.markdown(
-                f"""
-                <div class="metric-card">
-                    <div class="metric-value">{metrics['summary_words']:,}</div>
-                    <div class="metric-label">Summary Words</div>
-                </div>
-            """,
-                unsafe_allow_html=True,
-            )
+    def display_metrics(self, metrics: dict, processing_time: float):
+        col1, col2, col3, col4, col5 = st.columns(5)
 
-        with col3:
-            st.markdown(
-                f"""
-                <div class="metric-card">
-                    <div class="metric-value">{processing_time:.1f}s</div>
-                    <div class="metric-label">Processing Time</div>
-                </div>
-            """,
-                unsafe_allow_html=True,
-            )
+        self.render_metric(col1, f"{metrics['original_words']:,}", "Original Words")
+        self.render_metric(col2, f"{metrics['summary_words']:,}", "Summary Words")
+        self.render_metric(col3, f"{processing_time:.1f}s", "Processing Time")
 
     def render_method_selection(self):
         st.markdown("### 🔧 Select Summarization Method")
@@ -116,7 +85,9 @@ class SummarizationApp:
 
         for idx, (method, info) in enumerate(SUMMARIZERS.items()):
             with cols[idx]:
-                if st.button(f"{info.icon} {method}", help=info.desc, use_container_width=True):
+                if st.button(
+                    f"{info.icon} {method}", help=info.desc, use_container_width=True
+                ):
                     st.session_state["selected_method"] = method
 
     def fake_progress(
@@ -140,7 +111,7 @@ class SummarizationApp:
             summarizer = get_summarizer(
                 method,
                 model=st.session_state["model_name"],
-                temperature=st.session_state["temperature"]
+                temperature=st.session_state["temperature"],
             )
             summarizer.set_provider(st.session_state["provider"])
 
@@ -185,7 +156,7 @@ class SummarizationApp:
             processor = get_post_processor(
                 operation,
                 model=st.session_state.get("model_name"),
-                temperature=st.session_state.get("temperature", 0.7),
+                temperature=st.session_state.get("temperature", 0.0),
             )
             return processor.process(text)
         except Exception as e:
@@ -253,36 +224,22 @@ class SummarizationApp:
 
     def render_sidebar(self):
         with st.sidebar:
-            st.image(
-                "assets/images/logos/selene-logo-640.png", width="stretch"
-            )
+            st.image("assets/images/logos/selene-logo-640.png", width="stretch")
 
             st.markdown("---")
             st.markdown("#### 🔌 API Provider")
             st.session_state["model_name"] = st.selectbox(
                 "Select Model:",
-                [
-                    "gpt-5",
-                    "gpt-4.1",
-                    "gpt-4o",
-                    "gpt-4",
-                    "o4-mini",
-                    "gemini-2.5-flash",
-                    "sonar",
-                ],
-                index=[
-                    "gpt-5",
-                    "gpt-4.1",
-                    "gpt-4o",
-                    "gpt-4",
-                    "o4-mini",
-                    "gemini-2.5-flash",
-                    "sonar",
-                ].index(st.session_state.get("model_name", "gpt-4o")),
+                AVAILABLE_MODELS,
+                index=AVAILABLE_MODELS.index(
+                    st.session_state.get("model_name", DEFAULT_MODEL)
+                ),
                 help="Choose your preferred AI Model",
             )
-            
-            st.session_state["provider"] = get_provider_for_model(st.session_state["model_name"])
+
+            st.session_state["provider"] = get_provider_for_model(
+                st.session_state["model_name"]
+            )
 
             st.markdown("---")
             st.markdown("#### ⚙️ Settings")
@@ -290,53 +247,23 @@ class SummarizationApp:
                 "Model Settings",
                 expanded=st.session_state.get("show_advanced_settings", False),
             ):
-                # temperature
-                st.session_state["temperature"] = st.slider(
-                    "🌡️ temperature",
-                    0.1,
-                    1.0,
-                    st.session_state.get("temperature", 0.7),
-                    0.1,
-                    help="Controls creativity: Low=conservative, High=creative",
-                )
+                for param, default in DEFAULT_MODEL_SETTINGS.items():
+                    min_val, max_val, step = {
+                        "temperature": (0.1, 1.0, 0.1),
+                        "max_tokens": (50, 4000, 50),
+                        "top_p": (0.0, 1.0, 0.05),
+                        "frequency_penalty": (-2.0, 2.0, 0.1),
+                        "presence_penalty": (-2.0, 2.0, 0.1),
+                    }[param]
 
-                # max tokens
-                st.session_state["max_tokens"] = st.slider(
-                    "📝 Max Tokens",
-                    50,
-                    2000,
-                    st.session_state.get("max_tokens", 500),
-                    50,
-                    help="Maximum length of output",
-                )
-
-                st.session_state["top_p"] = st.slider(
-                    "🎯 Top-p",
-                    0.0,
-                    1.0,
-                    st.session_state.get("top_p", 0.9),
-                    0.05,
-                    help="Nucleus sampling parameter",
-                )
-
-                st.session_state["frequency_penalty"] = st.slider(
-                    "🔄 Frequency Penalty",
-                    -2.0,
-                    2.0,
-                    st.session_state.get("frequency_penalty", 0.0),
-                    0.1,
-                    help="Reduces repetition",
-                )
-
-                st.session_state["presence_penalty"] = st.slider(
-                    "🆕 Presence Penalty",
-                    -2.0,
-                    2.0,
-                    st.session_state.get("presence_penalty", 0.0),
-                    0.1,
-                    help="Encourages topic diversity",
-                )
-
+                    st.session_state[param] = st.slider(
+                        f"{param.replace('_',' ').title()}",
+                        min_val,
+                        max_val,
+                        st.session_state.get(param, default),
+                        step,
+                        help=f"Adjust {param.replace('_',' ')}",
+                    )
             st.markdown("---")
 
             st.markdown("#### 📬 Contact & Support")
@@ -602,13 +529,12 @@ class SummarizationApp:
             st.session_state["result_ls"] = [
                 p.strip() for p in edited_full.split("\n\n") if p.strip()
             ]
-            
+
     def render_html_images(self):
         html_code = """'<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>How Transformers Changed the Way Machines Understand Language</title>\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <style>\n    body {\n      font-family: \'Segoe UI\', Arial, sans-serif;\n      background: #f7f9fb;\n      margin: 0;\n      padding: 0;\n      color: #222;\n    }\n    .infographic-container {\n      max-width: 900px;\n      margin: 40px auto;\n      background: #fff;\n      border-radius: 18px;\n      box-shadow: 0 4px 24px rgba(0,0,0,0.08);\n      padding: 40px 30px;\n    }\n    .title {\n      text-align: center;\n      font-size: 2.2em;\n      font-weight: bold;\n      color: #3a7bd5;\n      margin-bottom: 10px;\n    }\n    .subtitle {\n      text-align: center;\n      font-size: 1.2em;\n      color: #555;\n      margin-bottom: 30px;\n    }\n    .section {\n      display: flex;\n      align-items: flex-start;\n      margin-bottom: 40px;\n      gap: 24px;\n    }\n    .section-icon {\n      flex-shrink: 0;\n      width: 64px;\n      height: 64px;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      background: #e3ecfa;\n      border-radius: 50%;\n      font-size: 2.2em;\n      color: #3a7bd5;\n      box-shadow: 0 2px 8px rgba(58,123,213,0.08);\n    }\n    .section-content {\n      flex: 1;\n    }\n    .section-title {\n      font-size: 1.3em;\n      font-weight: bold;\n      color: #3a7bd5;\n      margin-bottom: 6px;\n    }\n    .section-desc {\n      font-size: 1.05em;\n      color: #333;\n      margin-bottom: 6px;\n    }\n    .arrow {\n      text-align: center;\n      font-size: 2.5em;\n      color: #b0b8c1;\n      margin: -20px 0 10px 0;\n    }\n    .highlight {\n      background: #e3ecfa;\n      border-radius: 6px;\n      padding: 2px 6px;\n      color: #3a7bd5;\n      font-weight: 500;\n    }\n    @media (max-width: 700px) {\n      .infographic-container { padding: 20px 5px; }\n      .section { flex-direction: column; align-items: center; gap: 10px; }\n      .section-icon { margin-bottom: 8px; }\n    }\n  </style>\n</head>\n<body>\n  <div class="infographic-container">\n    <div class="title">How Transformers Changed the Way Machines Understand Language</div>\n    <div class="subtitle">A Visual Journey from Old AI to the Age of Transformers</div>\n\n    <!-- Section 1: The Old Way -->\n    <div class="section">\n      <div class="section-icon" title="Old AI">\n        <!-- Flashlight Icon (SVG) -->\n        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">\n          <rect x="7" y="2" width="10" height="6" rx="2" fill="#3a7bd5"/>\n          <rect x="9" y="8" width="6" height="10" rx="2" fill="#b0b8c1"/>\n          <rect x="10" y="18" width="4" height="4" rx="1" fill="#3a7bd5"/>\n        </svg>\n      </div>\n      <div class="section-content">\n        <div class="section-title">The Old Way: Step-by-Step Reading</div>\n        <div class="section-desc">\n          <span class="highlight">Recurrent Neural Networks (RNNs)</span> read sentences <b>one word at a time</b>, like using a flashlight in a dark room.<br>\n          <b>Problems:</b> Slow, forgetful, and struggle with long-range connections.<br>\n          <i>Example:</i> Hard to link <span class="highlight">"cat"</span> and <span class="highlight">"sat"</span> in a long sentence.\n        </div>\n      </div>\n    </div>\n\n    <div class="arrow">&#8595;</div>\n\n    <!-- Section 2: The Breakthrough -->\n    <div class="section">\n      <div class="section-icon" title="Transformer">\n        <!-- Lightbulb Icon (SVG) -->\n        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">\n          <ellipse cx="12" cy="10" rx="7" ry="7" fill="#3a7bd5"/>\n          <rect x="9" y="17" width="6" height="3" rx="1.5" fill="#b0b8c1"/>\n          <rect x="10" y="20" width="4" height="2" rx="1" fill="#3a7bd5"/>\n        </svg>\n      </div>\n      <div class="section-content">\n        <div class="section-title">The Breakthrough: Attention Is All You Need</div>\n        <div class="section-desc">\n          <span class="highlight">Transformers</span> see the <b>whole sentence at once</b>, like turning on the lights.<br>\n          <b>Key innovation:</b> <span class="highlight">Attention mechanism</span> focuses on important words, wherever they are.<br>\n          <b>Multi-head attention:</b> Like a team of readers, each spotting different patterns.<br>\n          <b>Results:</b> Faster, smarter, and more accurate—especially in translation and understanding context.\n        </div>\n      </div>\n    </div>\n\n    <div class="arrow">&#8595;</div>\n\n    <!-- Section 3: Real-World Impact -->\n    <div class="section">\n      <div class="section-icon" title="Impact">\n        <!-- Globe/AI Icon (SVG) -->\n        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">\n          <circle cx="12" cy="12" r="10" fill="#3a7bd5"/>\n          <ellipse cx="12" cy="12" rx="6" ry="10" fill="#e3ecfa"/>\n          <ellipse cx="12" cy="12" rx="10" ry="3" fill="#b0b8c1"/>\n        </svg>\n      </div>\n      <div class="section-content">\n        <div class="section-title">Why This Matters: Everyday AI</div>\n        <div class="section-desc">\n          <b>Transformers</b> power <span class="highlight">virtual assistants</span>, <span class="highlight">real-time translators</span>, <span class="highlight">smart chatbots</span>, and more.<br>\n          <b>Parallel processing</b> means faster, more scalable AI.<br>\n          <b>Impact:</b> More human-like, helpful, and accessible AI for everyone.\n        </div>\n      </div>\n    </div>\n\n    <div class="arrow">&#8595;</div>\n\n    <!-- Section 4: The New Era -->\n    <div class="section">\n      <div class="section-icon" title="Future">\n        <!-- Rocket Icon (SVG) -->\n        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">\n          <path d="M12 2 L15 8 L12 14 L9 8 Z" fill="#3a7bd5"/>\n          <circle cx="12" cy="16" r="2" fill="#b0b8c1"/>\n          <rect x="11" y="18" width="2" height="4" rx="1" fill="#3a7bd5"/>\n        </svg>\n      </div>\n      <div class="section-content">\n        <div class="section-title">A New Era of Language AI</div>\n        <div class="section-desc">\n          <b>Transformers</b> opened the door to smarter, faster, and more human-like AI.<br>\n          <b>From research labs to your phone</b>—they’re changing how we interact with technology every day.\n        </div>\n      </div>\n    </div>\n  </div>\n</body>\n</html>'
         """
 
         components.html(html_code, height=800, width=800, scrolling=False)
-
 
     def render_main_interface(self):
         st.markdown(
@@ -649,7 +575,7 @@ class SummarizationApp:
             chars = len(summarize_input)
             estimated_time = max(
                 5, words // 300
-            )  # Rough estimate: 300 words per second
+            ) 
 
             col1, col2, col3, col4 = st.columns([0.75, 1, 1, 4])
             with col1:

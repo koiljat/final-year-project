@@ -6,6 +6,7 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_perplexity import ChatPerplexity
 import logging
+from config.models import Provider
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -63,17 +64,16 @@ class LLMClient:
         res = self.llm.invoke(prompt)
         logger.info(f"Received response: {res.content}")
         return str(res.content)
-
-    def set_provider(self, provider: str):
-        """
-        Sets the provider for the client.
-
-        Args:
-            provider (str): The name of the provider to set. The value will be converted to lowercase.
-
-        """
+        
+    def set_provider(self, provider):
         logger.info(f"Setting provider to: {provider}")
-        self.provider = provider.lower()
+        if isinstance(provider, str):
+            self.provider = provider.lower()
+        elif isinstance(provider, Provider):
+            self.provider = provider.name.lower()
+        else:
+            raise ValueError(f"Unknown provider type: {type(provider)}")
+
         
     def set_model(self, model: str):
         """
