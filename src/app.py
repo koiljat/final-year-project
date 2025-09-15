@@ -1,9 +1,12 @@
 import streamlit as st
+import streamlit.components.v1 as components
+
 import time
 from typing import Optional, Dict, Any
 import traceback
 import PyPDF2
 
+from services.visualize import visualizer
 from services.visualize.visualizer import Visualizer
 import streamlit.components.v1 as components
 import random
@@ -21,7 +24,6 @@ from services.postprocessing.registry import get_post_processor
 
 class SummarizationApp:
     def __init__(self):
-        self.visualizer = Visualizer(temperature=0.3)
         self.setup_page_config()
         self.initialize_session_state()
 
@@ -70,13 +72,6 @@ class SummarizationApp:
             """,
             unsafe_allow_html=True,
         )
-
-    def display_metrics(self, metrics: dict, processing_time: float):
-        col1, col2, col3, col4, col5 = st.columns(5)
-
-        self.render_metric(col1, f"{metrics['original_words']:,}", "Original Words")
-        self.render_metric(col2, f"{metrics['summary_words']:,}", "Summary Words")
-        self.render_metric(col3, f"{processing_time:.1f}s", "Processing Time")
 
     def render_method_selection(self):
         st.markdown("### 🔧 Select Summarization Method")
@@ -162,6 +157,13 @@ class SummarizationApp:
         except Exception as e:
             st.error(f"❌ Post-processing error: {str(e)}")
             return text
+        
+    def render_images_section(self, summary: str):
+        visualizer = Visualizer()
+        html = visualizer.visualize(summary)
+        components.html(html, height=1000, scrolling=True)
+
+        
 
     def render_file_upload(self):
         st.markdown("##### 📁 Upload Document")
@@ -320,14 +322,10 @@ class SummarizationApp:
             self.render_paragraph_editor()
         else:
             self.render_full_document_editor()
+        
+        summary_text = "\n\n".join(st.session_state["result_ls"])
+        self.render_images_section(summary_text)
 
-        if st.session_state.get("processing_time"):
-            st.markdown("---")
-            metrics = {
-                "original_words": st.session_state.get("original_word_count", 0),
-                "summary_words": st.session_state.get("summary_word_count", 0),
-            }
-            self.display_metrics(metrics, st.session_state["processing_time"])
 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -530,12 +528,6 @@ class SummarizationApp:
                 p.strip() for p in edited_full.split("\n\n") if p.strip()
             ]
 
-    def render_html_images(self):
-        html_code = """'<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>How Transformers Changed the Way Machines Understand Language</title>\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <style>\n    body {\n      font-family: \'Segoe UI\', Arial, sans-serif;\n      background: #f7f9fb;\n      margin: 0;\n      padding: 0;\n      color: #222;\n    }\n    .infographic-container {\n      max-width: 900px;\n      margin: 40px auto;\n      background: #fff;\n      border-radius: 18px;\n      box-shadow: 0 4px 24px rgba(0,0,0,0.08);\n      padding: 40px 30px;\n    }\n    .title {\n      text-align: center;\n      font-size: 2.2em;\n      font-weight: bold;\n      color: #3a7bd5;\n      margin-bottom: 10px;\n    }\n    .subtitle {\n      text-align: center;\n      font-size: 1.2em;\n      color: #555;\n      margin-bottom: 30px;\n    }\n    .section {\n      display: flex;\n      align-items: flex-start;\n      margin-bottom: 40px;\n      gap: 24px;\n    }\n    .section-icon {\n      flex-shrink: 0;\n      width: 64px;\n      height: 64px;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      background: #e3ecfa;\n      border-radius: 50%;\n      font-size: 2.2em;\n      color: #3a7bd5;\n      box-shadow: 0 2px 8px rgba(58,123,213,0.08);\n    }\n    .section-content {\n      flex: 1;\n    }\n    .section-title {\n      font-size: 1.3em;\n      font-weight: bold;\n      color: #3a7bd5;\n      margin-bottom: 6px;\n    }\n    .section-desc {\n      font-size: 1.05em;\n      color: #333;\n      margin-bottom: 6px;\n    }\n    .arrow {\n      text-align: center;\n      font-size: 2.5em;\n      color: #b0b8c1;\n      margin: -20px 0 10px 0;\n    }\n    .highlight {\n      background: #e3ecfa;\n      border-radius: 6px;\n      padding: 2px 6px;\n      color: #3a7bd5;\n      font-weight: 500;\n    }\n    @media (max-width: 700px) {\n      .infographic-container { padding: 20px 5px; }\n      .section { flex-direction: column; align-items: center; gap: 10px; }\n      .section-icon { margin-bottom: 8px; }\n    }\n  </style>\n</head>\n<body>\n  <div class="infographic-container">\n    <div class="title">How Transformers Changed the Way Machines Understand Language</div>\n    <div class="subtitle">A Visual Journey from Old AI to the Age of Transformers</div>\n\n    <!-- Section 1: The Old Way -->\n    <div class="section">\n      <div class="section-icon" title="Old AI">\n        <!-- Flashlight Icon (SVG) -->\n        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">\n          <rect x="7" y="2" width="10" height="6" rx="2" fill="#3a7bd5"/>\n          <rect x="9" y="8" width="6" height="10" rx="2" fill="#b0b8c1"/>\n          <rect x="10" y="18" width="4" height="4" rx="1" fill="#3a7bd5"/>\n        </svg>\n      </div>\n      <div class="section-content">\n        <div class="section-title">The Old Way: Step-by-Step Reading</div>\n        <div class="section-desc">\n          <span class="highlight">Recurrent Neural Networks (RNNs)</span> read sentences <b>one word at a time</b>, like using a flashlight in a dark room.<br>\n          <b>Problems:</b> Slow, forgetful, and struggle with long-range connections.<br>\n          <i>Example:</i> Hard to link <span class="highlight">"cat"</span> and <span class="highlight">"sat"</span> in a long sentence.\n        </div>\n      </div>\n    </div>\n\n    <div class="arrow">&#8595;</div>\n\n    <!-- Section 2: The Breakthrough -->\n    <div class="section">\n      <div class="section-icon" title="Transformer">\n        <!-- Lightbulb Icon (SVG) -->\n        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">\n          <ellipse cx="12" cy="10" rx="7" ry="7" fill="#3a7bd5"/>\n          <rect x="9" y="17" width="6" height="3" rx="1.5" fill="#b0b8c1"/>\n          <rect x="10" y="20" width="4" height="2" rx="1" fill="#3a7bd5"/>\n        </svg>\n      </div>\n      <div class="section-content">\n        <div class="section-title">The Breakthrough: Attention Is All You Need</div>\n        <div class="section-desc">\n          <span class="highlight">Transformers</span> see the <b>whole sentence at once</b>, like turning on the lights.<br>\n          <b>Key innovation:</b> <span class="highlight">Attention mechanism</span> focuses on important words, wherever they are.<br>\n          <b>Multi-head attention:</b> Like a team of readers, each spotting different patterns.<br>\n          <b>Results:</b> Faster, smarter, and more accurate—especially in translation and understanding context.\n        </div>\n      </div>\n    </div>\n\n    <div class="arrow">&#8595;</div>\n\n    <!-- Section 3: Real-World Impact -->\n    <div class="section">\n      <div class="section-icon" title="Impact">\n        <!-- Globe/AI Icon (SVG) -->\n        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">\n          <circle cx="12" cy="12" r="10" fill="#3a7bd5"/>\n          <ellipse cx="12" cy="12" rx="6" ry="10" fill="#e3ecfa"/>\n          <ellipse cx="12" cy="12" rx="10" ry="3" fill="#b0b8c1"/>\n        </svg>\n      </div>\n      <div class="section-content">\n        <div class="section-title">Why This Matters: Everyday AI</div>\n        <div class="section-desc">\n          <b>Transformers</b> power <span class="highlight">virtual assistants</span>, <span class="highlight">real-time translators</span>, <span class="highlight">smart chatbots</span>, and more.<br>\n          <b>Parallel processing</b> means faster, more scalable AI.<br>\n          <b>Impact:</b> More human-like, helpful, and accessible AI for everyone.\n        </div>\n      </div>\n    </div>\n\n    <div class="arrow">&#8595;</div>\n\n    <!-- Section 4: The New Era -->\n    <div class="section">\n      <div class="section-icon" title="Future">\n        <!-- Rocket Icon (SVG) -->\n        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">\n          <path d="M12 2 L15 8 L12 14 L9 8 Z" fill="#3a7bd5"/>\n          <circle cx="12" cy="16" r="2" fill="#b0b8c1"/>\n          <rect x="11" y="18" width="2" height="4" rx="1" fill="#3a7bd5"/>\n        </svg>\n      </div>\n      <div class="section-content">\n        <div class="section-title">A New Era of Language AI</div>\n        <div class="section-desc">\n          <b>Transformers</b> opened the door to smarter, faster, and more human-like AI.<br>\n          <b>From research labs to your phone</b>—they’re changing how we interact with technology every day.\n        </div>\n      </div>\n    </div>\n  </div>\n</body>\n</html>'
-        """
-
-        components.html(html_code, height=800, width=800, scrolling=False)
-
     def render_main_interface(self):
         st.markdown(
             """
@@ -665,6 +657,7 @@ class SummarizationApp:
                     st.warning("⚠️ Click again to confirm")
 
         st.markdown("</div>", unsafe_allow_html=True)
+        
 
         self.render_results_section()
 

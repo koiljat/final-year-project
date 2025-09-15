@@ -101,21 +101,11 @@ simplify: |
   Simplify the text above.
 
 visualization: |
-  You are an award-winning science communicator who specializes in turning complex academic research into engaging science blog articles.
-  You specializing in creating educative and visually appealing HTML visualizations to explain complex processes.
+  You are an HTML expert and a great designer. Your task is to analyze the summary in the <summary></summary> tags and come up with a visual infographic-style version of the process mentioned in the summary.
 
-  Your task is to analyze a piece of summary given in <summary></summary> tags and create a lightweight HTML visualization (no external CSS or JS) that explains the following process in a clear and engaging way:
+  Do not use any external img links or content.
 
   <summary>{summary}</summary>
 
-  Your visualization should include the following elements:
-  - Engaging visuals and animations to represent key concepts
-  - Only return a lightweight and compact component
-  - Do not return the webpage HTML structure, only the component
-  - Ensure the HTML is self-contained and does not rely on external resources
-  - Avoid lengthy text blocks; use concise labels and captions
-
-  RETURN ONLY THE HTML INSIDE A <div> TAG.
-
   output:
-  ````html
+  <div style="font-family:Arial, sans-serif; max-width:600px; margin:20px auto; line-height:1.5;">
