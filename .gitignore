@@ -217,3 +217,5 @@ TODO.md
 notebooks/
 
 assets/
+
+.streamlit/

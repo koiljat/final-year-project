@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 import logging
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ class RAGSummarizer(Summarizer):
         """Creates a vector store from text chunks."""
         load_dotenv()
         logging.info("Creating vector store from text chunks.")
-        embeddings = OpenAIEmbeddings()
+        embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
         vector_store = FAISS.from_texts(texts, embeddings)
         return vector_store
 

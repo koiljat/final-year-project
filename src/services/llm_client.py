@@ -1,12 +1,13 @@
 import os
 from dotenv import load_dotenv
 
-# LangChain providers
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_perplexity import ChatPerplexity
 import logging
 from config.models import Provider
+
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,17 +35,26 @@ class LLMClient:
 
         if self.provider == "openai":
             logger.info("Using OpenAI provider")
-            self.llm = ChatOpenAI(model=self.model or "gpt-4o-mini", temperature=temperature)
+            self.llm = ChatOpenAI(
+                model=self.model or "gpt-4o-mini",
+                temperature=temperature,
+                api_key=os.getenv("OPENAI_API_KEY"),
+            )
 
         elif self.provider == "perplexity":
             logger.info("Using Perplexity provider")
             self.llm = ChatPerplexity(
-                model=self.model or "sonar", temperature=temperature, timeout=30
+                model=self.model or "sonar",
+                temperature=temperature,
+                pplx_api_key=os.getenv("PERPLEXITY_API_KEY"),
+                timeout=30,
             )
         elif self.provider == "gemini":
             logger.info("Using Gemini provider")
             self.llm = ChatGoogleGenerativeAI(
-                model=self.model or "gemini-2.5-flash", temperature=temperature
+                model=self.model or "gemini-2.5-flash",
+                temperature=temperature,
+                google_api_key=os.getenv("GOOGLE_API_KEY"),
             )
         else:
             logger.error(f"Unknown provider: {provider}")
@@ -64,7 +74,7 @@ class LLMClient:
         res = self.llm.invoke(prompt)
         logger.info(f"Received response: {res.content}")
         return str(res.content)
-        
+
     def set_provider(self, provider):
         logger.info(f"Setting provider to: {provider}")
         if isinstance(provider, str):
@@ -74,7 +84,6 @@ class LLMClient:
         else:
             raise ValueError(f"Unknown provider type: {type(provider)}")
 
-        
     def set_model(self, model: str):
         """
         Sets the model for the client.
