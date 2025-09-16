@@ -2,7 +2,7 @@ from services.llm_client import LLMClient
 from prompts.prompt_manager import PromptManager
 from dotenv import load_dotenv
 from langchain_community.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS
 import logging
 
 logging.basicConfig(level=logging.INFO)
