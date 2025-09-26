@@ -1,0 +1,51 @@
+/* App.css */
+
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9f9f9;
+}
+
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+  padding: 2rem;
+  background-color: #fff;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: #333;
+}
+
+.header p {
+  margin-top: 0.5rem;
+  color: #666;
+  font-size: 1rem;
+}
+
+.section {
+  margin-bottom: 2rem;
+}
+
+/* Add small card-like styling for each section */
+.card {
+  background-color: #fafafa;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  margin-bottom: 1.5rem;
+}
+
+/* FileUpload, MethodSelection, ResultsSection can use .card */

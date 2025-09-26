@@ -1,0 +1,71 @@
+.fileUpload {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* textarea at bottom */
+  height: 300px; /* adjust as needed */
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fafafa;
+  box-sizing: border-box;
+  gap: 1rem;
+}
+
+.fileUpload h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.fileInput {
+  padding: 0.3rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.textArea {
+width: calc(100% - 1.6rem);
+  min-height: 120px;
+  padding: 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.fileInput:focus,
+.textArea:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 4px rgba(74, 144, 226, 0.4);
+}
+
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* spacing between input and button */
+}
+
+.fileInput {
+  flex: 1; /* take up available space */
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.95rem;
+}
+
+.clearBtn {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.clearBtn:hover {
+  background-color: #eaeaea;
+  border-color: #bbb;
+}
