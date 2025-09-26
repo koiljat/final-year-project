@@ -1,4 +1,4 @@
-from services.postprocessing.base import BasePostProcessor
+from ..postprocessing.base import BasePostProcessor
 
 class SimplifyProcessor(BasePostProcessor):
     def process(self, text: str) -> str:

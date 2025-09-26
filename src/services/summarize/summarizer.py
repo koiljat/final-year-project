@@ -1,5 +1,5 @@
-from services.llm_client import LLMClient
-from prompts.prompt_manager import PromptManager
+from ..llm_client import LLMClient
+from ...prompts.prompt_manager import PromptManager
 from dotenv import load_dotenv
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class Summarizer(LLMClient):
     """Base Summarizer class using LLMClient and PromptManager."""
 
-    def __init__(self, model=None, temperature=0, **kwargs):
+    def __init__(self, model=None, temperature=0.0, **kwargs):
         super().__init__(model=model, temperature=temperature, **kwargs)
         self.prompt_manager = PromptManager()
 
@@ -28,7 +28,7 @@ class Summarizer(LLMClient):
 class ZeroShotSummarizer(Summarizer):
     """Zero-Shot Summarizer using predefined prompts."""
 
-    def __init__(self, model=None, temperature=0, **kwargs):
+    def __init__(self, model=None, temperature=0.0, **kwargs):
         super().__init__(model=model, temperature=temperature, **kwargs)
 
     def summarize(self, text: str) -> str:

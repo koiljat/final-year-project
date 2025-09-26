@@ -5,7 +5,7 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_perplexity import ChatPerplexity
 import logging
-from config.models import Provider
+from ..config.models import Provider
 
 load_dotenv()
 
@@ -27,7 +27,7 @@ class LLMClient:
             ValueError: If an unknown provider is specified.
         """
         load_dotenv()
-        self.provider = provider.lower()
+        self.provider = provider.name.lower() if isinstance(provider, Provider) else provider.lower()
         self.model = model
         logger.info(
             f"Initializing LLMClient with provider: {self.provider}, model: {self.model if self.model else 'default'}, temperature: {temperature}"
@@ -70,17 +70,17 @@ class LLMClient:
         Returns:
             str: The content of the LLM's response.
         """
-        logger.info(f"Running LLM with prompt: {prompt}")
+        logger.info(f"Running LLM with prompt: {prompt[:50]}...")  # Log only the first 50 characters of the prompt
         res = self.llm.invoke(prompt)
-        logger.info(f"Received response: {res.content}")
+        logger.info(f"Received response: {res.content[:50]}...")  # Log only the first 50 characters of the response
         return str(res.content)
 
     def set_provider(self, provider):
         logger.info(f"Setting provider to: {provider}")
-        if isinstance(provider, str):
-            self.provider = provider.lower()
-        elif isinstance(provider, Provider):
+        if isinstance(provider, Provider):
             self.provider = provider.name.lower()
+        elif isinstance(provider, str):
+            self.provider = provider.lower()
         else:
             raise ValueError(f"Unknown provider type: {type(provider)}")
 
