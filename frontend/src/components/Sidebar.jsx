@@ -57,26 +57,15 @@ const Sidebar = ({
 
           <div className={styles.section}>
             <h4>Temperature</h4>
-            <div className={styles.flexRow}>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={temperature}
-                onChange={(e) => setTemperature(Number(e.target.value))}
-                title={`Temperature: ${temperature}`}
-              />
-              <input
-                type="number"
-                min={0}
-                max={1}
-                step={0.01}
-                value={temperature}
-                onChange={(e) => setTemperature(Number(e.target.value))}
-                className={styles.inputSmall}
-              />
-            </div>
+            <input
+              type="number"
+              min={0}
+              max={1}
+              step={0.01}
+              value={temperature}
+              onChange={(e) => setTemperature(Number(e.target.value))}
+              title={`Temperature: ${temperature}`}
+            />
           </div>
 
           <div className={styles.section}>
