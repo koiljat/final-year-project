@@ -4,7 +4,8 @@ const Sidebar = ({
   selectedModel, setSelectedModel, 
   temperature, setTemperature, 
   topP, setTopP,
-  isCollapsed, onToggleCollapse
+  isCollapsed, onToggleCollapse,
+  isDarkMode, onToggleDarkMode
 }) => {
   return (
     <div className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
@@ -34,7 +35,7 @@ const Sidebar = ({
         <div className={styles.sidebarContent}>
           <div className={styles.logoSection}>
             <img src="/assets/selene-logo.png" alt="Selene Logo" />
-            <h3>AI Settings</h3>
+            <h3>Settings</h3>
           </div>
 
           <div className={styles.section}>
@@ -89,6 +90,30 @@ const Sidebar = ({
               onChange={(e) => setTopP(Number(e.target.value))}
               title={`Top P: ${topP}`}
             />
+          </div>
+
+          <div className={styles.section}>
+            <h4>Theme</h4>
+            <div className={styles.themeToggle}>
+              <button
+                className={`${styles.themeButton} ${!isDarkMode ? styles.active : ''}`}
+                onClick={() => onToggleDarkMode && onToggleDarkMode()}
+                disabled={!isDarkMode}
+                title="Light Mode"
+              >
+                <span className={styles.themeIcon}>☀️</span>
+                <span className={styles.themeLabel}>Light</span>
+              </button>
+              <button
+                className={`${styles.themeButton} ${isDarkMode ? styles.active : ''}`}
+                onClick={() => onToggleDarkMode && onToggleDarkMode()}
+                disabled={isDarkMode}
+                title="Dark Mode"
+              >
+                <span className={styles.themeIcon}>🌙</span>
+                <span className={styles.themeLabel}>Dark</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

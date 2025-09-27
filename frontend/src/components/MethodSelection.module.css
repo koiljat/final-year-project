@@ -114,6 +114,7 @@
   border: 2px solid var(--color-border-light);
   cursor: pointer;
   background-color: var(--color-background-primary);
+  color: var(--color-text-primary);
   transition: all var(--transition-base);
   box-sizing: border-box;
 }
@@ -129,6 +130,12 @@
   border-color: var(--color-primary);
   box-shadow: var(--focus-ring);
   background-color: var(--color-background-primary);
+}
+
+/* Style select dropdown options for theme support */
+.cardSelect option {
+  background-color: var(--color-background-primary);
+  color: var(--color-text-primary);
 }
 
 /* Responsive Design */
