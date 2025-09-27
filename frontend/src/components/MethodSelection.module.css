@@ -1,30 +1,171 @@
+@import '../styles/variables.css';
+
 .methodSelection {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background-color: #fafafa;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-background-card);
+  box-shadow: var(--shadow-base);
+  transition: all var(--transition-base);
 }
 
-.methodSelection h3 {
+.methodSelection:hover {
+  border-color: var(--color-border-secondary);
+  box-shadow: var(--shadow-md);
+}
+
+.methodSelection h2 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+}
+
+.methodSelection h2:hover {
+  background-color: var(--color-background-secondary);
+  color: var(--color-text-primary);
+}
+
+/* 2x2 Grid Layout */
+.settingsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-base);
+  animation: slideDown var(--transition-slow) ease-out;
+}
+
+/* Individual Setting Cards */
+.settingCard {
+  background: linear-gradient(145deg, var(--color-background-input), var(--color-background-secondary));
+  border: 2px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-base);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.settingCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+  transform: scaleX(0);
+  transition: transform var(--transition-base);
+}
+
+.settingCard:hover {
+  border-color: var(--color-primary-light);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.settingCard:hover::before {
+  transform: scaleX(1);
+}
+
+/* Card Header */
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-base);
+}
+
+.cardIcon {
+  font-size: var(--font-size-xl);
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.cardHeader h3 {
   margin: 0;
-  font-size: 1.2rem;
-  color: #333;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  flex: 1;
 }
 
-.methodSelection select {
-  padding: 0.5rem;
-  font-size: 1rem;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+/* Card Select Styling */
+.cardSelect {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-base);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-border-light);
   cursor: pointer;
-  background-color: #fff;
+  background-color: var(--color-background-primary);
+  transition: all var(--transition-base);
+  box-sizing: border-box;
 }
 
-.methodSelection select:focus {
+.cardSelect:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-background-input);
+  box-shadow: var(--shadow-sm);
+}
+
+.cardSelect:focus {
   outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 4px rgba(74, 144, 226, 0.4);
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+  background-color: var(--color-background-primary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .settingsGrid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .settingCard {
+    padding: var(--spacing-sm);
+  }
+  
+  .cardIcon {
+    width: 30px;
+    height: 30px;
+    font-size: var(--font-size-lg);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered animation for cards */
+.settingCard:nth-child(1) { animation-delay: 0s; }
+.settingCard:nth-child(2) { animation-delay: 0.1s; }
+.settingCard:nth-child(3) { animation-delay: 0.2s; }
+.settingCard:nth-child(4) { animation-delay: 0.3s; }
+
+.settingCard {
+  animation: slideDown var(--transition-base) ease-out both;
 }

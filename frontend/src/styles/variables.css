@@ -1,0 +1,99 @@
+/* Design System Variables */
+:root {
+  /* Colors */
+  --color-primary: #4a90e2;
+  --color-primary-hover: #3a78c0;
+  --color-primary-light: #cbd6ee;
+  --color-primary-focus: rgba(74, 144, 226, 0.15);
+  
+  --color-text-primary: #333;
+  --color-text-secondary: #666;
+  --color-text-tertiary: #999;
+  --color-text-on-primary: #fff;
+  
+  --color-background-primary: #fff;
+  --color-background-secondary: #fafafa;
+  --color-background-tertiary: #f9f9f9;
+  --color-background-card: #fafafa;
+  --color-background-input: #fff;
+  
+  --color-border-primary: #ccc;
+  --color-border-secondary: #ddd;
+  --color-border-light: #e0e0e0;
+  --color-border-focus: #4a90e2;
+  
+  --color-shadow-light: rgba(0, 0, 0, 0.03);
+  --color-shadow-medium: rgba(0, 0, 0, 0.05);
+  --color-shadow-dark: rgba(0, 0, 0, 0.08);
+  
+  --color-button-secondary: #f5f5f5;
+  --color-button-secondary-hover: #eaeaea;
+  --color-button-secondary-border: #ddd;
+  --color-button-secondary-border-hover: #bbb;
+  --color-button-disabled: #b0c7e8;
+  
+  /* Typography */
+  --font-family-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-family-secondary: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', 'Source Code Pro', Menlo, Consolas, 'Courier New', monospace;
+  
+  --font-size-xs: 0.8rem;
+  --font-size-sm: 0.9rem;
+  --font-size-base: 0.95rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.1rem;
+  --font-size-xl: 1.2rem;
+  --font-size-2xl: 1.4rem;
+  --font-size-3xl: 2rem;
+  
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.6;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 0.75rem;
+  --spacing-base: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 2.5rem;
+  --spacing-3xl: 3rem;
+  
+  /* Border Radius */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-base: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  /* Box Shadows */
+  --shadow-xs: 0 1px 2px var(--color-shadow-light);
+  --shadow-sm: 0 2px 4px var(--color-shadow-light);
+  --shadow-base: 0 2px 6px var(--color-shadow-medium);
+  --shadow-md: 0 4px 8px var(--color-shadow-medium);
+  --shadow-lg: 0 8px 16px var(--color-shadow-dark);
+  --shadow-inset-sm: inset 0 0 5px var(--color-shadow-light);
+  --shadow-inset-base: inset 0 0 8px var(--color-shadow-medium);
+  
+  /* Focus Ring */
+  --focus-ring: 0 0 0 3px var(--color-primary-focus);
+  --focus-ring-sm: 0 0 4px rgba(74, 144, 226, 0.3);
+  --focus-ring-md: 0 0 4px rgba(74, 144, 226, 0.4);
+  
+  /* Transitions */
+  --transition-fast: 0.1s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+  
+  /* Layout */
+  --sidebar-width: 260px;
+  --container-max-width: 1200px;
+  --content-padding: var(--spacing-xl);
+}

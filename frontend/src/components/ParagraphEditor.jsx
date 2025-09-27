@@ -39,30 +39,31 @@ const ParagraphEditor = ({ paragraph, index, summaryResult, setSummaryResult, se
   };
 
   return (
-    <div style={{ marginBottom: "1rem" }}>
+    <div className={styles["paragraph-editor"]}>
       <textarea
         className={styles["plain-text-block"]}
         value={paragraph}
         onChange={handleChange}
+        placeholder="Enter paragraph content..."
       />
       <div className={styles["actions"]}>
         <button
-          className={styles["action-btn"]}
+          className={styles["actionBtn"]}
           onClick={() => handlePostProcess("Simplify")}
         >
-          Simplify
+          💡 Simplify
         </button>
         <button
-          className={styles["action-btn"]}
+          className={styles["actionBtn"]}
           onClick={() => handlePostProcess("Shorten")}
         >
-          Shorten
+          ✂️ Shorten
         </button>
         <button
-          className={styles["action-btn"]}
+          className={styles["actionBtn"]}
           onClick={() => handlePostProcess("Rephrase")}
         >
-          Rephrase
+          🔄 Rephrase
         </button>
       </div>
     </div>

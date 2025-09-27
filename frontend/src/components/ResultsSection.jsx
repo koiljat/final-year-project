@@ -1,6 +1,8 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { postProcessText } from "../services/api";
+import { summaryStorage } from "../services/summaryStorage";
+import LoadingIndicator from "./LoadingIndicator";
 import ParagraphEditor from "./ParagraphEditor";
 import styles from "./ResultsSection.module.css";
 
@@ -12,18 +14,21 @@ const ResultsSection = ({
   temperature,
   topP,
   selectedModel,
+  isLoading,
+  setIsLoading,
 }) => {
-  const [loading, setLoading] = useState(false);
   const [showMarkdown, setShowMarkdown] = useState(true);
   const [paragraphMode, setParagraphMode] = useState(false); // paragraph-wise editing toggle
+  const [currentOperation, setCurrentOperation] = useState('summary'); // track what operation is loading
 
   // Generate summary from API
   const handleGenerate = async () => {
     if (!textInput) return;
-    setLoading(true);
+    setCurrentOperation('summary');
+    setIsLoading(true);
     try {
       const response = await fetch("http://127.0.0.1:8000/summarize", {
-        method: "POST",
+        method: "POST", 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           text: textInput,
@@ -35,16 +40,29 @@ const ResultsSection = ({
       const data = await response.json();
       setSummaryResult([data.summary]);
       setShowMarkdown(false); // default to editable after generation
+      
+      // Save to localStorage
+      summaryStorage.saveSummary({
+        summary: data.summary,
+        originalText: textInput,
+        method: selectedMethod,
+        model: selectedModel,
+        temperature,
+        topP,
+      });
+      
     } catch (error) {
       console.error("Error fetching summary:", error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   // Post-process (Simplify, Shorten, Rephrase)
   const handlePostProcess = async (operation) => {
     if (!summaryResult.length) return;
+    setCurrentOperation(operation.toLowerCase());
+    setIsLoading(true);
     let processed;
 
     const operationsMap = {
@@ -53,9 +71,9 @@ const ResultsSection = ({
       "Rephrase": "/rephrase"
     };
 
-    if (operation in operationsMap) {
-      // Call your FastAPI /shorten endpoint
-      try {
+    try {
+      if (operation in operationsMap) {
+        // Call your FastAPI endpoint
         const response = await fetch(`http://127.0.0.1:8000${operationsMap[operation]}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -68,17 +86,18 @@ const ResultsSection = ({
         });
         const data = await response.json();
         processed = data.summary;
-      } catch (error) {
-        console.error("Error processing text:", error);
-        return;
+      } else {
+        // Use existing postProcessText for fallback
+        processed = await postProcessText(operation, summaryResult[0]);
       }
-    } else {
-      // Use existing postProcessText for Simplify/Rephrase
-      processed = await postProcessText(operation, summaryResult[0]);
+      
+      setSummaryResult([processed]);
+      setShowMarkdown(false); // stay editable
+    } catch (error) {
+      console.error("Error processing text:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    setSummaryResult([processed]);
-    setShowMarkdown(false); // stay editable
   };
 
   // Toggle markdown view
@@ -87,28 +106,29 @@ const ResultsSection = ({
   return (
     <div className={styles["results-section"]}>
       <button
-        className={styles["generate-btn"]}
+        className={styles["generateBtn"]}
         onClick={handleGenerate}
-        disabled={loading}
+        disabled={isLoading}
       >
-        {loading ? "⏳ Generating..." : "🚀 Generate Summary"}
+        {isLoading ? "⏳ Generating..." : "🚀 Generate Summary"}
       </button>
-      {loading && <p>Loading summary, please wait...</p>}
+      
+      {isLoading && <LoadingIndicator operation={currentOperation} />}
 
-      {summaryResult.length > 0 && !loading && (
+      {summaryResult.length > 0 && !isLoading && (
         <div className={styles["results-container"]}>
           <div className={styles["results-header"]}>
             <h3 className={styles["results-title"]}>Results</h3>
-            <div>
-              <button onClick={toggleMarkdown} className={styles["action-btn"]}>
-                {showMarkdown ? "Show Plain Text" : "Show Markdown"}
+            <div className={styles.buttonGroup}>
+              <button onClick={toggleMarkdown} className={styles["actionBtn"]}>
+                {showMarkdown ? "📝 Show Plain Text" : "👁️ Show Markdown"}
               </button>
               {!showMarkdown && (
                 <button
                   onClick={() => setParagraphMode(!paragraphMode)}
-                  className={styles["action-btn"]}
+                  className={styles["actionBtn"]}
                 >
-                  {paragraphMode ? "Single Block Edit" : "Paragraph-wise Edit"}
+                  {paragraphMode ? "📄 Single Block Edit" : "📋 Paragraph-wise Edit"}
                 </button>
               )}
             </div>
@@ -148,22 +168,25 @@ const ResultsSection = ({
                 </div>
                 <div className={styles["actions"]}>
                   <button
-                    className={styles["action-btn"]}
+                    className={styles["actionBtn"]}
                     onClick={() => handlePostProcess("Simplify")}
+                    disabled={isLoading}
                   >
-                    Simplify
+                    💡 Simplify
                   </button>
                   <button
-                    className={styles["action-btn"]}
+                    className={styles["actionBtn"]}
                     onClick={() => handlePostProcess("Shorten")}
+                    disabled={isLoading}
                   >
-                    Shorten
+                    ✂️ Shorten
                   </button>
                   <button
-                    className={styles["action-btn"]}
+                    className={styles["actionBtn"]}
                     onClick={() => handlePostProcess("Rephrase")}
+                    disabled={isLoading}
                   >
-                    Rephrase
+                    🔄 Rephrase
                   </button>
                 </div>
               </div>
