@@ -90,6 +90,24 @@ body, html {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+  position: relative;
+}
+
+.tab-btn::before {
+  content: attr(data-text);
+  font-weight: var(--font-weight-semibold);
+  visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--spacing-sm) var(--spacing-base);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--spacing-xs);
+  pointer-events: none;
 }
 
 .tab-btn:hover {

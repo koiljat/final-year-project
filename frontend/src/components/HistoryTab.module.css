@@ -127,6 +127,43 @@
 .summaryActions {
   display: flex;
   gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.exportBtn {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  border: 2px solid #2ecc71;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-on-primary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  min-height: 32px;
+  white-space: nowrap;
+  box-shadow: var(--shadow-xs);
+}
+
+.exportBtn:hover {
+  background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+  border-color: #27ae60;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.exportBtn:focus {
+  outline: none;
+  box-shadow: var(--focus-ring), var(--shadow-xs);
+}
+
+.exportBtn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-xs);
 }
 
 .expandBtn, .deleteBtn {
@@ -220,11 +257,17 @@
   
   .summaryActions {
     align-self: flex-end;
+    flex-wrap: wrap;
   }
   
   .headerActions {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-sm);
+    width: 100%;
+  }
+  
+  .clearAllBtn {
+    align-self: flex-end;
   }
 }

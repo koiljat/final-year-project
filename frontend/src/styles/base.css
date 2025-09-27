@@ -6,6 +6,15 @@
   box-sizing: border-box;
 }
 
+/* Global theme transition for smooth switching */
+*, *::before, *::after {
+  transition: 
+    background-color var(--transition-base),
+    color var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -21,6 +30,7 @@ body {
 html {
   margin: 0;
   padding: 0;
+  background-color: var(--color-background-tertiary);
 }
 
 /* Code blocks */
@@ -138,6 +148,7 @@ code {
   border-radius: var(--radius-base);
   font-size: var(--font-size-base);
   font-family: inherit;
+  color: var(--color-text-primary);
   background-color: var(--color-background-input);
   transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
@@ -158,6 +169,7 @@ code {
   border: 1px solid var(--color-border-primary);
   border-radius: var(--radius-base);
   font-size: var(--font-size-base);
+  color: var(--color-text-primary);
   background-color: var(--color-background-input);
   cursor: pointer;
   transition: border-color var(--transition-base), box-shadow var(--transition-base);
@@ -181,6 +193,7 @@ code {
   border-radius: var(--radius-base);
   font-size: var(--font-size-base);
   font-family: inherit;
+  color: var(--color-text-primary);
   background-color: var(--color-background-input);
   resize: vertical;
   transition: border-color var(--transition-base), box-shadow var(--transition-base);
@@ -191,4 +204,20 @@ code {
   outline: none;
   border-color: var(--color-border-focus);
   box-shadow: var(--focus-ring-md);
+}
+
+/* Global input, select, textarea styling for theme support */
+input, select, textarea {
+  color: var(--color-text-primary) !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--color-text-tertiary) !important;
+  opacity: 0.8;
+}
+
+/* Ensure option elements also follow theme */
+option {
+  background-color: var(--color-background-input) !important;
+  color: var(--color-text-primary) !important;
 }

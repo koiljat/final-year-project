@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import FileUpload from "./components/FileUpload";
 import HistoryTab from "./components/HistoryTab";
@@ -16,9 +16,21 @@ function App() {
   const [activeTab, setActiveTab] = useState("current");
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Initialize from localStorage or default to false
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'dark';
+  });
+
+  // Apply theme to document and persist preference
+  useEffect(() => {
+    const theme = isDarkMode ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [isDarkMode]);
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
       <Sidebar 
         selectedModel={selectedModel} 
         setSelectedModel={setSelectedModel}
@@ -28,13 +40,15 @@ function App() {
         setTopP={setTopP}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
       />
       <div className="content">
         <div className="header">
           <div className="logo-title">
             <img src="/assets/selene-logo.png" alt="Selene Logo" className="app-logo" />
             <div>
-              <h1>Selene</h1>
+              <h1>SELENExplains</h1>
               <p>Transform documents into concise summaries</p>
             </div>
           </div>
@@ -45,12 +59,14 @@ function App() {
           <button 
             className={`tab-btn ${activeTab === 'current' ? 'active' : ''}`}
             onClick={() => setActiveTab('current')}
+            data-text={`📝 Current Summary ${isLoading ? '⏳' : ''}`}
           >
             📝 Current Summary {isLoading && '⏳'}
           </button>
           <button 
             className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
             onClick={() => setActiveTab('history')}
+            data-text="📚 History"
           >
             📚 History
           </button>

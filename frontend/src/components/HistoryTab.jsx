@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import { summaryStorage } from '../services/summaryStorage';
-import styles from './HistoryTab.module.css';
+import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import { showExportOptions } from "../services/exportService";
+import { summaryStorage } from "../services/summaryStorage";
+import styles from "./HistoryTab.module.css";
 
 const HistoryTab = ({ isActive }) => {
   const [summaries, setSummaries] = useState([]);
@@ -13,24 +14,49 @@ const HistoryTab = ({ isActive }) => {
       const storedSummaries = summaryStorage.getSummaries();
       setSummaries(storedSummaries);
     };
-    
+
     if (isActive) {
       loadSummaries();
     }
   }, [isActive]);
 
   const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this summary?')) {
+    if (window.confirm("Are you sure you want to delete this summary?")) {
       summaryStorage.deleteSummary(id);
-      setSummaries(prevSummaries => prevSummaries.filter(s => s.id !== id));
+      setSummaries((prevSummaries) => prevSummaries.filter((s) => s.id !== id));
     }
   };
 
   const handleClearAll = () => {
-    if (window.confirm('Are you sure you want to clear all summary history? This action cannot be undone.')) {
+    if (
+      window.confirm(
+        "Are you sure you want to clear all summary history? This action cannot be undone."
+      )
+    ) {
       summaryStorage.clearAll();
       setSummaries([]);
     }
+  };
+
+  const handleExportSummary = (summary) => {
+    const content = `# Summary Report\n\n**Generated:** ${formatDate(
+      summary.timestamp
+    )}\n**Method:** ${summary.method || "Default"}\n**Model:** ${
+      summary.model || "Unknown Model"
+    }\n\n## Original Text\n\n${
+      summary.originalText || "No original text available"
+    }\n\n## Summary\n\n${summary.summary}`;
+
+    const filename = `summary-${summary.id}`;
+
+    showExportOptions(content, filename, (format) => {
+      if (format) {
+        console.log(
+          `Exported summary ${summary.id} as ${format.toUpperCase()}`
+        );
+        // Optionally show a success message
+      }
+    });
   };
 
   const toggleExpanded = (id) => {
@@ -39,18 +65,18 @@ const HistoryTab = ({ isActive }) => {
 
   const formatDate = (isoString) => {
     const date = new Date(isoString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const truncateText = (text, maxLength = 150) => {
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    return text.substring(0, maxLength) + "...";
   };
 
   if (summaries.length === 0) {
@@ -72,10 +98,7 @@ const HistoryTab = ({ isActive }) => {
         <h2>Summary History</h2>
         <div className={styles.headerActions}>
           <span className={styles.count}>{summaries.length} summaries</span>
-          <button 
-            onClick={handleClearAll}
-            className={styles.clearAllBtn}
-          >
+          <button onClick={handleClearAll} className={styles.clearAllBtn}>
             Clear All
           </button>
         </div>
@@ -91,21 +114,28 @@ const HistoryTab = ({ isActive }) => {
                 </span>
                 <div className={styles.summaryDetails}>
                   <span className={styles.method}>
-                    {summary.method || 'Default'}
+                    {summary.method || "Default"}
                   </span>
                   <span className={styles.model}>
-                    {summary.model || 'Unknown Model'}
+                    {summary.model || "Unknown Model"}
                   </span>
                 </div>
               </div>
               <div className={styles.summaryActions}>
-                <button 
+                <button
+                  onClick={() => handleExportSummary(summary)}
+                  className={styles.exportBtn}
+                  title="Export summary in various formats"
+                >
+                  💾 Export
+                </button>
+                <button
                   onClick={() => toggleExpanded(summary.id)}
                   className={styles.expandBtn}
                 >
-                  {expandedId === summary.id ? 'Collapse' : 'Expand'}
+                  {expandedId === summary.id ? "Collapse" : "Expand"}
                 </button>
-                <button 
+                <button
                   onClick={() => handleDelete(summary.id)}
                   className={styles.deleteBtn}
                 >
@@ -119,7 +149,12 @@ const HistoryTab = ({ isActive }) => {
                 <div className={styles.fullContent}>
                   <div className={styles.originalText}>
                     <h4>Original Text:</h4>
-                    <p>{truncateText(summary.originalText || 'No original text available', 300)}</p>
+                    <p>
+                      {truncateText(
+                        summary.originalText || "No original text available",
+                        300
+                      )}
+                    </p>
                   </div>
                   <div className={styles.summaryResult}>
                     <h4>Summary:</h4>

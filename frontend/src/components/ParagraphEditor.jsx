@@ -1,3 +1,4 @@
+import { showExportOptions } from "../services/exportService";
 import styles from "./ResultsSection.module.css";
 
 const ParagraphEditor = ({ paragraph, index, summaryResult, setSummaryResult, selectedModel}) => {
@@ -38,6 +39,18 @@ const ParagraphEditor = ({ paragraph, index, summaryResult, setSummaryResult, se
     setSummaryResult(updated);
   };
 
+  // Handle paragraph export
+  const handleParagraphExport = () => {
+    const content = paragraph;
+    const filename = `paragraph-${index + 1}`;
+    
+    showExportOptions(content, filename, (format) => {
+      if (format) {
+        console.log(`Exported paragraph ${index + 1} as ${format.toUpperCase()}`);
+      }
+    });
+  };
+
   return (
     <div className={styles["paragraph-editor"]}>
       <textarea
@@ -47,6 +60,13 @@ const ParagraphEditor = ({ paragraph, index, summaryResult, setSummaryResult, se
         placeholder="Enter paragraph content..."
       />
       <div className={styles["actions"]}>
+        <button
+          className={styles["exportBtn"]}
+          onClick={handleParagraphExport}
+          title={`Export paragraph ${index + 1}`}
+        >
+          💾 Export
+        </button>
         <button
           className={styles["actionBtn"]}
           onClick={() => handlePostProcess("Simplify")}
